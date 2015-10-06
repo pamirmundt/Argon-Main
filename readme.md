@@ -8,4 +8,3 @@
 - DC motor with driver
 - Driver
 - Optical flow sensor
-- 
