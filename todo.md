@@ -1,4 +1,7 @@
 # To do
-- [ ] Test
-- [x] Test2
-- [ ] Test3
+- [X] Motor Control (PID) with Trex Jr
+- [ ] 
+
+# Shopping List
+- DC motor with driver
+- Driver
