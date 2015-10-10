@@ -1,3 +1,7 @@
+#Daily to do
+- [ ] Tülin teyze mail
+- [ ] Tülin teyze niyet mektubu alınacak
+
 # To do
 - [X] Motor control with Trex Jr - Arduino
 - [ ] Motor control with Pololu - AVR
