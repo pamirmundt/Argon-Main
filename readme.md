@@ -15,7 +15,7 @@
 - [X] RS-485 Module
 
 
-#Tülin teyze'ye sorular
+#Sorular
 - Patent nasıl olur?
 - Herkese sattık şimdi ne olacak?
 - Devlet printer alamazken bu robotu nasıl alacaklar?
