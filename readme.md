@@ -1,9 +1,6 @@
-#Daily to do
-- [ ] Tülin teyze mail
-- [ ] Tülin teyze niyet mektubu alınacak
-
 # To do
 - [X] Motor control with Trex Jr - Arduino
+- [ ] AVR PWM
 - [ ] Motor control with Pololu - AVR
 - [ ] Motor driver - AVR - RPI / BBB
 - [ ] Hack a mouse - Optical flow sensor
@@ -16,3 +13,9 @@
 - [X] Driver
 - [ ] Optical flow sensor
 - [X] RS-485 Module
+
+
+#Tülin teyze'ye sorular
+- Patent nasıl olur?
+- Herkese sattık şimdi ne olacak?
+- Devlet printer alamazken bu robotu nasıl alacaklar?
