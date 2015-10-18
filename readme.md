@@ -1,5 +1,6 @@
 # To do
 - [X] Motor control with Trex Jr - Arduino
+- [ ] Motor control with Pololu - Arduino - BBB
 - [ ] AVR PWM
 - [ ] Motor control with Pololu - AVR
 - [ ] Motor driver - AVR - RPI / BBB
