@@ -1,13 +1,12 @@
 # To do
-- [X] Motor control with Trex Jr - Arduino
-- [ ] Motor control with Pololu - Arduino - BBB
-- [ ] AVR PWM
-- [ ] Motor control with Pololu - AVR
-- [ ] Motor driver - AVR - RPI / BBB
+- [X] PWM and driver control with Arduino
+- [ ] Motor PID control with Pololu - Arduino
+- [ ] Communication with BBB over USART
 - [ ] Hack a mouse - Optical flow sensor
 
 #Postponed
 - [ ] Communication between AVRs - RS-485
+- [ ] Arduino to AVR
 
 # Shopping List
 - [ ] DC motor with ecoder
