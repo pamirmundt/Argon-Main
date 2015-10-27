@@ -1,19 +1,24 @@
 const int encoderA = 2; //Encoder A Channel
 const int encoderB = 3; //Encoder B Channel
-const int PWMA = 5;      //PWM A Pin
+const int PWMA = 5;     //PWM A Pin
 const int AIN2 = 6;     //Channel A - Input 2
 const int AIN1 = 7;     //Channel A - Input 1
-const int STBY = 8;      //Driver Standby
+const int STBY = 8;     //Driver Standby
 
-volatile long int interval = 0;
-volatile long int timeold = 0;
-volatile int RPM = 0;
-volatile double velErr = 0;
-volatile double control = 0;
-double refVel = 3500;
-double Kp = 0.00025;
-double Ki = 0.0;
-double Kd = 0.0;
+volatile long int interval = 0;   //RPM calculation interval
+volatile long int timeold = 0;    //RPM calculation
+volatile int RPM = 0;             //RPM
+volatile double velErr = 0;       //Velocity Error
+volatile double control = 0;      //Control Signal
+double refVel = 12000;            //Reference RPM
+double Kp = 0.00025;              //PID - Kp
+double Ki = 0.0;                  //PID - Ki
+double Kd = 0.0;                  //PID - Kd
+
+volatile long int interval2 = 0;
+volatile long int timeold2 = 0;
+
+int i = 0;
 
 void setup() {
   //set timer2 interrupt at 500Hz
@@ -31,23 +36,23 @@ void setup() {
   //TCCR0B = TCCR0B & B11111000 | B00000100;    // set timer 0 divisor to   256 for PWM frequency of   244.14 Hz
   //TCCR0B = TCCR0B & B11111000 | B00000101;    // set timer 0 divisor to  1024 for PWM frequency of    61.04 Hz
   
-  pinMode(AIN2, OUTPUT);
-  pinMode(AIN1, OUTPUT);
-  pinMode(STBY, OUTPUT);
-  pinMode(encoderA, INPUT);
-  pinMode(encoderB, INPUT);
+  pinMode(AIN2, OUTPUT);    //Pololu Driver AIN2, direction2
+  pinMode(AIN1, OUTPUT);    //Pololu Driver AIN1, direction1
+  pinMode(STBY, OUTPUT);    //Pololu Driver Standby mode
+  pinMode(encoderA, INPUT); //Encoder Channel A
+  pinMode(encoderB, INPUT); //Encoder Channel B 
+  digitalWrite(STBY, HIGH); //Pololu Driver, Standby mode. LOW -> HIGH IMPEDENCE (STOP)
 
-  digitalWrite(AIN2, LOW);  //AIN2 -> LOW, AIN1 -> HIGH, CW
-  digitalWrite(AIN1, HIGH); //AIN2 -> HIGH, AIN1 -> LOW, CCW
-  digitalWrite(STBY, HIGH); //LOW -> HIGH IMPEDENCE (STOP)
-
-  attachInterrupt(0,encoderA_RPM, RISING); //Encoder channel A
+  attachInterrupt(0,encoderA_RPM, RISING); //Encoder channel A interrupt
   Serial.begin(9600);
 }
 
 void loop() {
-  //analogWrite(PWMA, 50); //Max 255 - 6V
-  Serial.println(RPM);
+  //analogWrite(PWMA, 73); //Max 255 - 6V
+  while(true){
+    Serial.println(interval2);
+    i++;
+  }
 }
 
 void encoderA_RPM(){
@@ -61,11 +66,29 @@ void encoderA_RPM(){
 
 //Timer2 interrupt at 500hz for PID
 ISR(TIMER2_COMPA_vect){
+  interval2 = micros() - timeold2;
+  timeold2 = micros();
   velErr = refVel - RPM;
   control = Kp*velErr + control;
+  
+  //AIN2 -> LOW, AIN1 -> HIGH, CW
+  //AIN2 -> HIGH, AIN1 -> LOW, CCW
+  if(control > 0){
+    //CW
+    digitalWrite(AIN2, LOW);
+    digitalWrite(AIN1, HIGH);
+  }
+  else{
+    //CCW
+    digitalWrite(AIN2, HIGH);
+    digitalWrite(AIN1, LOW);
+  }  
   if(control > 255){
     control = 255;
   }
-  analogWrite(PWMA,(int)control);
+  if(control < -255){
+    control = -255;
+  }
+  analogWrite(PWMA,abs((int)control));  
 }
 
