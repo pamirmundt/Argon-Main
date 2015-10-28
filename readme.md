@@ -1,6 +1,6 @@
 # To do
 - [X] PWM and driver control with Arduino
-- [ ] Motor PID control with Pololu - Arduino
+- [X] Motor PID control with Pololu - Arduino
 - [ ] Communication with BBB over USART
 - [ ] Hack a mouse - Optical flow sensor
 
