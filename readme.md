@@ -8,9 +8,3 @@
 #Postponed
 - [ ] Communication between AVRs - RS-485
 - [ ] Arduino to AVR
-
-# Shopping List
-- [ ] DC motor with ecoder
-- [X] Driver
-- [X] Optical flow sensor
-- [X] RS-485 Module
