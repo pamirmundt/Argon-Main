@@ -4,18 +4,13 @@
 //Gear Ratio: 9.28
 //Mega Interrupt Pins: 2, 3, 18, 19, 20, 21
 
-//TODO
-//- PID Control
-//- Second Motor
-//- Optimize Code
-
 #include <digitalWriteFast.h>
 #include "pins.h"
 #include "param.h"
 
 //Motor-1 Constraints
 volatile double RPM1 = 0;
-volatile double refRPM1 = 1, errRPM1 = 0.0, control1 = 0.0;
+volatile double refRPM1 = 0.0, errRPM1 = 0.0, integral1 = 0.0, derivative1 = 0.0, errPrevRPM1 = 0.0, control1 = 0.0;
 volatile long int encPos1A = 0, encPos1B = 0, encPos1 = 0, dPos1 = 0, encPosOld1 = 0;
 
 void setup() {
@@ -49,10 +44,8 @@ void setup() {
   interrupts();             // enable all interrupts
 }
 
-void loop() {
-  Serial.print(RPM1/gearRatio);
-  Serial.print(" ");
-  Serial.println(control1);
+void loop(){
+  Serial.println(RPM1/gearRatio);
 }
 
 void encoder1A(){
@@ -63,17 +56,20 @@ void encoder1B(){
   (digitalReadFast(encoder1A_pin)) ? encPos1B++ : encPos1B--;
 }
 
-//RPM Calculation
+//Control Loop
 ISR(TIMER2_COMPA_vect){
   //Motor-1 RPM Calculation
-  encPos1 = (encPos1B + encPos1A)/2;      //Average of Encoder delta time(dt) A and B
+  encPos1 = (encPos1B + encPos1A)/2;          //Average of Encoder delta time(dt) A and B
   dPos1 = encPos1 - encPosOld1;               //Delta Position Encoder-1
   encPosOld1 = encPos1;                       //Update Position Old
-  RPM1 = calcRPM(dPos1);                              //Motor-1 RPM
+  RPM1 = calcRPM(dPos1);                      //Motor-1 RPM
   
   //PID
   errRPM1 = refRPM1*gearRatio - RPM1;
-  control1 = Kp1*errRPM1 + control1;
+  integral1 = integral1 + errRPM1*contPer;
+  derivative1 = (errRPM1 - errPrevRPM1)/contPer;
+  control1 = Kp1*errRPM1 + Ki1*integral1 + Kd1*derivative1;
+  errPrevRPM1 = errRPM1;
 
   //Motor-1 Control
   if(control1 > 0){
@@ -94,7 +90,7 @@ ISR(TIMER2_COMPA_vect){
 
 double calcRPM(int dPos){
   double RPM;
-  RPM = (60000000.0/(contFreq*encoderRes))*dPos;
+  RPM = (60000000.0/(contPer*encoderRes))*dPos;
   return RPM;
 }
 
