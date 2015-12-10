@@ -4,24 +4,19 @@
 //Gear Ratio: 9.28
 //Mega Interrupt Pins: 2, 3, 18, 19, 20, 21
 
+//TODO
+//- PID Control
+//- Second Motor
+//- Optimize Code
+
 #include <digitalWriteFast.h>
+#include "pins.h"
+#include "param.h"
 
-#define encoderRes 344    //Encoder Resolution 344 pulse/rotation
-#define gearRatio 9.28    //Gear Ratio 1:9.8
-
-//Motor-1 Pins and constraints
-const int encoder1A_pin = 2, encoder1B_pin = 3;   //Encoder Pins
-const int PWM1 = 11;                              //PWM Pin
-const int AIN1_1 = 22, AIN1_2 = 23;               //AIN Enable Pins
-const int STBY1 = 24;                             //Standby Pin
-
+//Motor-1 Constraints
 volatile double RPM1 = 0;
-volatile int dt1 = 0, dt1A = 0, dt1B = 0;
-volatile long int timeOld1A = 0, timeOld1B = 0;
-volatile long int encoderPos1A = 0, encoderPos1B = 0, encoderPos1 = 0;
-
-const double Kp1 = 0.1, Ki1 = 0.0, Kd1 = 0.0;
-volatile double refVel1 = 300.0, velErr1 = 0.0, control1 = 0.0;
+volatile double refRPM1 = 1, errRPM1 = 0.0, control1 = 0.0;
+volatile long int encPos1A = 0, encPos1B = 0, encPos1 = 0, dPos1 = 0, encPosOld1 = 0;
 
 void setup() {
   noInterrupts();           // disable all interrupts
@@ -41,74 +36,75 @@ void setup() {
   pinModeFast(encoder1B_pin, INPUT);
   pinModeFast(AIN1_1, OUTPUT);
   pinModeFast(AIN1_2, OUTPUT);
-  pinModeFast(STBY1, OUTPUT);
+  pinModeFast(STBY, OUTPUT);
   pinModeFast(PWM1, OUTPUT);
 
-  digitalWriteFast(STBY1, HIGH);    //Enable Motor-1
-  digitalWriteFast(AIN1_1, LOW);
-  digitalWriteFast(AIN1_2, HIGH);
+  digitalWriteFast(STBY, HIGH);    //Enable Motors
 
   attachInterrupt(0, encoder1A, RISING);
   attachInterrupt(1, encoder1B, RISING);
+  
   Serial.begin(9600);
+  
   interrupts();             // enable all interrupts
 }
 
 void loop() {
-  Serial.print(RPM1);
+  Serial.print(RPM1/gearRatio);
   Serial.print(" ");
   Serial.println(control1);
 }
 
 void encoder1A(){
-  dt1A = micros() - timeOld1A;
-  timeOld1A = micros();
-  (digitalReadFast(encoder1B_pin) == 1) ? encoderPos1A-- : encoderPos1A++;
+  (digitalReadFast(encoder1B_pin)) ? encPos1A-- : encPos1A++;
 }
 
 void encoder1B(){
-  dt1B = micros() - timeOld1B;
-  timeOld1B = micros();
-  (digitalReadFast(encoder1A_pin) == 1) ? encoderPos1B++ : encoderPos1B--;
+  (digitalReadFast(encoder1A_pin)) ? encPos1B++ : encPos1B--;
 }
 
 //RPM Calculation
 ISR(TIMER2_COMPA_vect){
   //Motor-1 RPM Calculation
-  dt1 = (dt1A + dt1B)/2;  //Average of Encoder delta time(dt) A and B
-  RPM1 = calcRPM(dt1);        //Motor-1 RPM
-
+  encPos1 = (encPos1B + encPos1A)/2;      //Average of Encoder delta time(dt) A and B
+  dPos1 = encPos1 - encPosOld1;               //Delta Position Encoder-1
+  encPosOld1 = encPos1;                       //Update Position Old
+  RPM1 = calcRPM(dPos1);                              //Motor-1 RPM
+  
   //PID
-  velErr1 = refVel1 - RPM1;
-  control1 = Kp1*velErr1 + control1;
-  /*
+  errRPM1 = refRPM1*gearRatio - RPM1;
+  control1 = Kp1*errRPM1 + control1;
+
   //Motor-1 Control
   if(control1 > 0){
     //CW Rotation
-      digitalWriteFast(AIN1_1, LOW);
-      digitalWriteFast(AIN1_2, HIGH);
+    digitalWriteFast(AIN1_1, HIGH);
+    digitalWriteFast(AIN1_2, LOW);
   } else {
     //CCW Rotation
-      digitalWriteFast(AIN1_1, HIGH);
-      digitalWriteFast(AIN1_2, LOW);
+    digitalWriteFast(AIN1_1, LOW);
+    digitalWriteFast(AIN1_2, HIGH);
   }
-  */
+  
   //Motor-1 Control Saturate
-  if(control1 > 255){
-    control1 = 255;
-  }
-  if(control1 < -255){
-    control1 = -255;
-  }
-  analogWrite(PWM1, control1);
+  control1 = saturate(control1);
+  
+  analogWrite(PWM1, abs((int)control1));
 }
 
-double calcRPM(int dt){
+double calcRPM(int dPos){
   double RPM;
-  if (dt > 0)
-    RPM = 60000000.0/(dt*gearRatio*encoderRes);
-  else
-    RPM = 0.0;
+  RPM = (60000000.0/(contFreq*encoderRes))*dPos;
   return RPM;
+}
+
+double saturate(double control){
+  if(control > 255){
+    control = 255;
+  }
+  if(control < -255){
+    control = -255;
+  }
+  return control;
 }
 
