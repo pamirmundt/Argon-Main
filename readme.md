@@ -1,10 +1,5 @@
 # To do
-- [X] PWM and driver control with Arduino
-- [X] Motor PID control with Pololu - Arduino
-- [ ] Communication Protocol
-- [ ] Communication with BBB over USART
-- [ ] Hack a mouse - Optical flow sensor
-
-#Postponed
-- [ ] Communication between AVRs - RS-485
-- [ ] Arduino to AVR
+- [ ] PID with Integer
+- [ ] ANDS - 9800 with AVR
+- [ ] Teensy 3.2 <-> AVR communication
+- [ ] Teensy 3.2 <-> RPI communication
