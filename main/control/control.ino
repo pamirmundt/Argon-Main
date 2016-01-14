@@ -3,52 +3,62 @@
 //Encoder Resolution: 344 pulse/rotation
 //Gear Ratio: 9.28
 
+//TODO
+//- Motor class
+
 //#include <digitalWriteFast.h>
 #include "pins.h"
 #include "param.h"
 
-IntervalTimer controlLoop;
+IntervalTimer controlInterrupt1;
 
 //Motor-1 Constraints
-volatile float refRPM1 = 460.0;
+volatile float refRPM1 = 0.0;
 volatile int32_t RPM1 = 0, errRPM1 = 0, integral1 = 0, derivative1 = 0, errPrevRPM1 = 0, control1 = 0;
 volatile int32_t encPos1A = 0, encPos1B = 0, encPos1 = 0, dPos1 = 0, encPosOld1 = 0;
 
 void setup() {
-  noInterrupts();           // disable all interrupts
-
+  noInterrupts();                   // disable all interrupts
+  //Pololu Driver-1 (Motor 1-2)
+  pinMode(STBY1, OUTPUT);
+  //Motor-1 Pins
   pinMode(encoder1A_pin, INPUT);
   pinMode(encoder1B_pin, INPUT);
   pinMode(AIN1_1, OUTPUT);
   pinMode(AIN1_2, OUTPUT);
-  pinMode(STBY, OUTPUT);
   pinMode(PWM1, OUTPUT);
 
-  //Test LED - Pin 13
-  pinMode(13, OUTPUT);
-  digitalWrite(13, HIGH);
-
-  digitalWriteFast(STBY, HIGH);    //Enable Motors
+  //Motor-2 Pins
+  pinMode(encoder2A_pin, INPUT);
+  pinMode(encoder2B_pin, INPUT);
+  pinMode(AIN2_1, OUTPUT);
+  pinMode(AIN2_2, OUTPUT);
+  pinMode(PWM2, OUTPUT);
+  
+  digitalWriteFast(STBY1, HIGH);    //Enable Motors 1-2
 
   analogWriteRes(9);   //9-bit resolution PWM, 0-511, 93750 Hz
   
-  attachInterrupt(5, encoder1A, RISING);
-  attachInterrupt(6, encoder1B, RISING);
-  
-  Serial.begin(9600);
+  //Motor Encoder Interrupts
+  attachInterrupt(encoder1A_pin, encoder1A, RISING);  //Motor-1
+  attachInterrupt(encoder1B_pin, encoder1B, RISING);  //Motor-1
+  //attachInterrupt();
+  //attachInterrupt();
 
-  controlLoop.begin(control, contPeriod);
+  //Motor Control Interrupts
+  controlInterrupt1.begin(controlLoop1, (contPerSec*1000000));
   
-  interrupts(); //Enable all interrupts
-}
+  Serial.begin(9600); //Start Serial
+  interrupts();       //Enable all interrupts
+} 
 
 void loop(){
-  Serial.print(RPM1/512/gearRatio);
-  Serial.print(" ");
   Serial.print(encPos1A);
   Serial.print(" ");
-  Serial.println(encPos1B);
-  delay(500);
+  Serial.print(encPos1B);
+  Serial.print(" ");
+  Serial.println(RPM1/512/gearRatio);
+  delay(250);
 }
 
 void encoder1A(){
@@ -59,7 +69,7 @@ void encoder1B(){
   (digitalReadFast(encoder1A_pin)) ? encPos1B-- : encPos1B++;
 }
 
-void control(){
+void controlLoop1(){
   //Motor-1 RPM Calculation
   encPos1 = (encPos1B + encPos1A) >> 1;       //Average of Encoder delta time(dt) A and B
   dPos1 = encPos1 - encPosOld1;               //Delta Position Encoder-1
