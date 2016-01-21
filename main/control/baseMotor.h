@@ -22,14 +22,12 @@ enum{
 };
 
 typedef struct{
-  int8_t index;
+  boolean mEnable;
   
   volatile int32_t refRPM;
   volatile int32_t RPM;
-  volatile int32_t pos;
-  volatile int32_t posPrev;
-  volatile int32_t encPosA;
-  volatile int32_t encPosB;
+  volatile int32_t posEnc;
+  volatile int32_t posEncPrev;
   volatile int32_t dPos;
 
   float Kp;
