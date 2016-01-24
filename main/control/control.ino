@@ -14,7 +14,7 @@ IntervalTimer controlInterrupt4;
 
 BMotor motor[4];  //Base Motors
 
-float test = 50;
+float test = 0;
 
 void setup() {
   //Clean BMotor
@@ -90,13 +90,13 @@ void setup() {
 } 
 
 void loop(){
-  Serial.print(motor[0].posEnc);
+  Serial.print(motor[0].RPM/512/gearRatio);
   Serial.print(" ");
-  Serial.print(motor[1].posEnc);
+  Serial.print(motor[1].RPM/512/gearRatio);
   Serial.print(" ");
-  Serial.print(motor[2].posEnc);
+  Serial.print(motor[2].RPM/512/gearRatio);
   Serial.print(" ");
-  Serial.println(motor[3].posEnc);
+  Serial.println(motor[3].RPM/512/gearRatio);
   delay(250);
 }
 

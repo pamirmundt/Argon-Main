@@ -3,11 +3,11 @@
 
 //Motor: JGA25-271
 //Encoder Resolution: 344 pulse/rotation
-//Gear Ratio: 9.28
+//Gear Ratio: 13.552
 
 //Motor and controller parameters
 #define encoderRes 334                    //Encoder Resolution 344 pulse/rotation
-#define gearRatio 9.28f                   //Gear Ratio 1:9.28
+#define gearRatio 13.552f                 //Gear Ratio 1:13.552
 #define contPerSec 0.01f                  //Control Period - 100Hz to microsecond  1/100sec = 0.01sec
 
 const float Kp = 0.3;
