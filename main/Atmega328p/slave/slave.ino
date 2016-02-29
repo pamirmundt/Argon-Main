@@ -31,7 +31,7 @@
 // bufI2C -> │CMD(uint8_t)│Param1(float)│Param2(float)│Param3(float)│
 
 Motor m;
-const uint8_t dataSize = 26;
+const uint8_t dataSize = 28;
 byte bufI2C[dataSize];
 byte rdata[dataSize];
 
@@ -48,12 +48,13 @@ DRIVE_MODE myMode = MANUEL_MODE;
 //***** SETUP *****
 void setup() {
   //Wheel Number
-  m.wheel = FRONT_LEFT_WHEEL;
+  m.wheel = 3;
 
   //I2C Init
   //Join I2C as Slave
-  //Address: 0x01
-  Wire.begin(1);
+  //Master Address: 0x20
+  //Slave Address: 0x2X
+  Wire.begin(0x24);
   Wire.onReceive(CMD_Event);
   Wire.onRequest(requestEvent);
 
@@ -179,15 +180,14 @@ void cmdParser(uint8_t cmd){
       // msgs - 22byte
       //│Wheel(uint16)│EncPos(int32)│RPM(float)│PWM(float)│RefPos(int32)│RefRPM(int32)│
       //      ControlFreq(float)│MsgsFreq(float)|
-      uint16_t wheel = m.wheel;
       int32_t posEnc = m.posEnc;
       float RPM = m.RPM/gearRatio;
       float PWM = m.PWM;
       uint32_t refPos = m.refPos;
       float refRPM = m.refRPM;
       float contFreq = controlFreq;
-      
-      memcpy(&bufI2C[0], &wheel, sizeof(wheel));
+
+      memcpy(&bufI2C[0], &m.wheel, sizeof(m.wheel));
       memcpy(&bufI2C[2], &posEnc, sizeof(posEnc));
       memcpy(&bufI2C[6], &RPM, sizeof(RPM));
       memcpy(&bufI2C[10], &PWM, sizeof(PWM));

@@ -19,10 +19,10 @@ typedef enum{
   FRONT_RIGHT_WHEEL,
   REAR_LEFT_WHEEL,
   REAR_RIGHT_WHEEL
-} WHEEL;
+};
 
 typedef struct{
-  WHEEL wheel;
+  uint16_t wheel;
   
   volatile float PWM;
   volatile float RPM;

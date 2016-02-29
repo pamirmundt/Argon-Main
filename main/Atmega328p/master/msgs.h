@@ -3,6 +3,13 @@
 
 #define MSGS_FREQ 10.0f //Hz
 
+typedef enum{
+  FRONT_LEFT_WHEEL,
+  FRONT_RIGHT_WHEEL,
+  REAR_LEFT_WHEEL,
+  REAR_RIGHT_WHEEL
+};
+
 typedef struct{
   uint16_t wheel;
   int32_t encPos;
