@@ -17,8 +17,8 @@ float Kd = 0.0;
 typedef enum{
   FRONT_LEFT_WHEEL,
   FRONT_RIGHT_WHEEL,
-  REAR_LEFT_WHEEL,
-  REAR_RIGHT_WHEEL
+  REAR_RIGHT_WHEEL,
+  REAR_LEFT_WHEEL
 };
 
 typedef struct{
