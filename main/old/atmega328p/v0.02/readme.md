@@ -2,4 +2,4 @@
 - Slave -> Atmega328p (Arduino Pro Mini)
 - Master -> Atmega328p (Arduino Uno)
 
-+ Master class is partially working
+###### Master class is partially working
