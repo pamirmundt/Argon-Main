@@ -36,15 +36,17 @@ extern void motorInit(void);
 void cmdParser(){
 	//Clean TX Buffer before writing new messages
 	memset(&txBuffer, 0, sizeof(TXBUFFERSIZE));
-	
+
+	//Get Command(CMD)
 	uint8_t cmd[1];
 	memcpy(&cmd[0], &rxBuffer[0], sizeof(cmd));
 	
 	switch(cmd[0]){
     //***** SET Commands *****
     case CMD_RESET: {
-			memset(&m, 0, sizeof(m));
 			motorInit();
+			memset(&m, 0, sizeof(m));
+			
     } break;
 		
 		case CMD_SET_SPEED: {

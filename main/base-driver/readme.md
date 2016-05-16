@@ -1,6 +1,5 @@
 # Base Control with Nucleo-f303k8
-- Slave - Nucleo-f303k8
-- Master - Nucleo-f446re
+- Slave/Master Nucleo-f303k8
 
 
 #####Toolchain
