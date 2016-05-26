@@ -1,4 +1,4 @@
-#include "i2c.h"
+#include "I2CParser.h"
 
 extern Motor m;
 extern uint16_t PWM_resolution;
@@ -46,7 +46,6 @@ void cmdParser(){
     case CMD_RESET: {
 			motorInit();
 			memset(&m, 0, sizeof(m));
-			
     } break;
 		
 		case CMD_SET_SPEED: {

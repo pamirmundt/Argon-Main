@@ -1,5 +1,5 @@
-#ifndef I2C_H
-#define I2C_H
+#ifndef I2CParser_H
+#define I2CParser_H
 
 #include <stdint.h>
 #include <string.h>
