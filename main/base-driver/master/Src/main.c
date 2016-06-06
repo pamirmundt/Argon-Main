@@ -43,11 +43,16 @@
 
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
+DMA_HandleTypeDef hdma_i2c1_rx;
+DMA_HandleTypeDef hdma_i2c1_tx;
+
+TIM_HandleTypeDef htim9;
 
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
+void calcPID(void);
 
 //I2C RX/TX Buffer
 const uint16_t RXBUFFERSIZE = 12;		//Receive buffer size
@@ -55,19 +60,45 @@ const uint16_t TXBUFFERSIZE = 13;		//Transmit buffer size
 uint8_t txBuffer[TXBUFFERSIZE];
 uint8_t rxBuffer[RXBUFFERSIZE];
 
+//Base and motor
+//Base MAX SPEED = 0.97m/s
 Motor motorFL, motorFR, motorRL, motorRR;
 Base mecanumBase;
 
+//Slave wheel I2C Addresses
+const uint16_t FRwheelAddr = 0x40;
+const uint16_t FLwheelAddr = 0x42;
+const uint16_t RRwheelAddr = 0x44;
+const uint16_t RLwheelAddr = 0x46;
+
+//Control configurations
+//100Hz PID postion control
+const float contPeriod = 1.0f/100.0f;
+
+//PID Constants
+//Longitude position control constants
+const float KLp = 13.5f, KLi = 0.0f, KLd = 0.01f; 
+//Transversal position control constants
+const float KTp = 13.5f, KTi = 0.0f, KTd = 0.01f;
+//Angular(orientation) position control constants
+const float KOp = 0.6f, KOi = 0.0f, KOd = 0.0001f;
+
+//Torque to velocity constant
+const float Ktv = 100000.0f;
+	
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_USART2_UART_Init(void);
+static void MX_TIM9_Init(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
+void baseInit(void);
 
 /* USER CODE END PFP */
 
@@ -92,40 +123,51 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_I2C1_Init();
   MX_USART2_UART_Init();
+  MX_TIM9_Init();
 
   /* USER CODE BEGIN 2 */
 	
-	motorFL.slaveAddr = 0x40;
-	motorFR.slaveAddr = 0x42;
-	motorRL.slaveAddr = 0x44;
-	motorRR.slaveAddr = 0x46;
+	//Initialize Base
+	baseInit();
 	
-	mecanumBase.frontLeftWheel = motorFL;
-	mecanumBase.frontRightWheel = motorFR;
-	mecanumBase.rearLeftWheel = motorRL;
-	mecanumBase.rearRightWheel = motorRR;
+	//Control Interrupt Init
+	//Timer 9 - 90MHz
+	//180Mhz/60000/30 = 100Hz
+	HAL_TIM_Base_Start_IT(&htim9);
 	
-	motor_setRPM(motorFL, 0.00f);
-	motor_setRPM(motorFR, 0.00f);
-	motor_setRPM(motorRL, 0.00f);
-	motor_setRPM(motorRR, 0.00f);
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-		base_setVelocity(mecanumBase, 0.0f, 0.0f, 0.0f);
+		//Update Base Position
+		base_getPosition(&mecanumBase, &mecanumBase.longitudinalPosition, &mecanumBase.transversalPosition, &mecanumBase.orientation);
 		
-		float rpm = motor_getSpeed(motorFR)/13.552f;		
-		char str[20];
-		sprintf(str,"%f\n", rpm);
-		HAL_UART_Transmit(&huart2,(uint8_t*)str, strlen(str),1000);
 		
-		HAL_Delay(10);
+		//Set wheel velocity(RPM)
+		motor_setRPM(motorFL, mecanumBase.wheelTorques[0]*Ktv);
+		motor_setRPM(motorFR, mecanumBase.wheelTorques[1]*Ktv);
+		motor_setRPM(motorRL, mecanumBase.wheelTorques[2]*Ktv);
+		motor_setRPM(motorRR, mecanumBase.wheelTorques[3]*Ktv);
+		
+		
+		//DEBUG ONLY
+		//base_setVelocity(mecanumBase, 0.01f, 0.0f, 0.0f);
+		//base_getVelocity(mecanumBase, &longitudinalVelocity, &transversalVelocity, &angularVelocity);
+		
+		//Serial Print
+		char str[60];
+		int test1 = mecanumBase.controlLong*1000;
+		int test2 = mecanumBase.refLongitudinalPosition*1000;
+		int test3 = mecanumBase.errLong*1000;
+		//sprintf(str,"$%d %d %d;", test1, test2, test3);
+		sprintf(str,"%f %f %f \n", mecanumBase.longitudinalPosition, mecanumBase.transversalPosition, mecanumBase.orientation);
+		HAL_UART_Transmit_IT(&huart2,(uint8_t*)str, strlen(str));
+		
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
@@ -194,6 +236,24 @@ void MX_I2C1_Init(void)
 
 }
 
+/* TIM9 init function */
+void MX_TIM9_Init(void)
+{
+
+  TIM_ClockConfigTypeDef sClockSourceConfig;
+
+  htim9.Instance = TIM9;
+  htim9.Init.Prescaler = 60000;
+  htim9.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim9.Init.Period = 29;
+  htim9.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  HAL_TIM_Base_Init(&htim9);
+
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  HAL_TIM_ConfigClockSource(&htim9, &sClockSourceConfig);
+
+}
+
 /* USART2 init function */
 void MX_USART2_UART_Init(void)
 {
@@ -207,6 +267,24 @@ void MX_USART2_UART_Init(void)
   huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
   huart2.Init.OverSampling = UART_OVERSAMPLING_16;
   HAL_UART_Init(&huart2);
+
+}
+
+/** 
+  * Enable DMA controller clock
+  */
+void MX_DMA_Init(void) 
+{
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Stream5_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream5_IRQn);
+  /* DMA1_Stream6_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
 
 }
 
@@ -247,6 +325,104 @@ void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+/**
+  * @brief  Initialize Base
+							- Reset wheels
+							-	Reset base parameters
+  * @param  None
+  * @retval None
+  */
+void baseInit(){
+	//Reset wheel instances
+	memset(&motorFL, 0, sizeof(motorFL));
+	memset(&motorFR, 0, sizeof(motorFR));
+	memset(&motorRL, 0, sizeof(motorRL));
+	memset(&motorRR, 0, sizeof(motorRR));
+	
+	//Reset base instance
+	memset(&mecanumBase, 0, sizeof(mecanumBase));
+	
+	//Init motors	i2c addresses
+	motorFL.slaveAddr = FLwheelAddr;
+	motorFR.slaveAddr = FRwheelAddr;
+	motorRL.slaveAddr = RLwheelAddr;
+	motorRR.slaveAddr = RRwheelAddr;
+	
+	//Set motors
+	mecanumBase.frontLeftWheel = motorFL;
+	mecanumBase.frontRightWheel = motorFR;
+	mecanumBase.rearLeftWheel = motorRL;
+	mecanumBase.rearRightWheel = motorRR;
+	
+	//Reset Wheels
+	motor_reset(motorFL);
+	motor_reset(motorFR);
+	motor_reset(motorRL);
+	motor_reset(motorRR);
+	
+	//Set PID constants
+	//Longitudinal PID Constants
+	mecanumBase.KLp = KLp;
+	mecanumBase.KLi = KLi;
+	mecanumBase.KLd = KLd;
+	
+	//Transversal PID Constants
+	mecanumBase.KTp = KTp;
+	mecanumBase.KTi = KTi;
+	mecanumBase.KTd = KTd;
+	
+	//Orientation PID Constants
+	mecanumBase.KOp = KOp;
+	mecanumBase.KOi = KOi;
+	mecanumBase.KOd = KOd;
+}
+
+/**
+  * @brief  Timer 9 Interrupt at 100Hz
+  * @param  htim pointer
+  * @retval None
+  */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+	// This callback is automatically called by the HAL on the UEV event
+	if(htim->Instance == TIM9){
+		calcPID();
+		base_calcWheelTorques(&mecanumBase, mecanumBase.wheelTorques);
+	}
+	
+}
+
+/**
+  * @brief  Calculates PID. Calculate PID every 'contPeriod' (100Hz - 0.01sec)
+	*					PID Position control input: base position error (q_x, q_y, q_theta)
+	*					PID Position control output: base force (F_x, F_y, F_theta)
+  * @param  None
+  * @retval None
+  */
+void calcPID(){
+	
+	//Base Longitudinal Position PD
+	mecanumBase.errLong = mecanumBase.refLongitudinalPosition - mecanumBase.longitudinalPosition;
+	//mecanumBase.integralLong = mecanumBase.integralLong + mecanumBase.errLong * contPeriod;
+	mecanumBase.derivativeLong = (mecanumBase.errLong - mecanumBase.errPrevLong) / contPeriod;
+	mecanumBase.controlLong = mecanumBase.KLp * mecanumBase.errLong + mecanumBase.KLd * mecanumBase.derivativeLong; //+ mecanumBase.Ki * mecanumBase.integralLong;
+	mecanumBase.errPrevLong = mecanumBase.errLong;
+	
+	
+	//Base Transversal Position PD
+	mecanumBase.errTrans = mecanumBase.refTransversalPosition - mecanumBase.transversalPosition;
+	//mecanumBase.integralTrans = mecanumBase.integralTrans + mecanumBase.errTrans * contPeriod;
+	mecanumBase.derivativeTrans = (mecanumBase.errTrans - mecanumBase.errPrevTrans) / contPeriod;
+	mecanumBase.controlTrans = mecanumBase.KTp * mecanumBase.errPrevTrans + mecanumBase.KTd * mecanumBase.derivativeTrans; //+ mecanumBase.Ki * mecanumBase.integralTrans;
+	mecanumBase.errPrevTrans = mecanumBase.errTrans;
+	
+	//Base Orientation PD
+	mecanumBase.errOrien = mecanumBase.refOrientation - mecanumBase.orientation;
+	//mecanumBase.integralOrien = mecanumBase.integralOrien + mecanumBase.errOrien * contPeriod;
+	mecanumBase.derivativeOrien = (mecanumBase.errOrien - mecanumBase.errPrevOrien) / contPeriod;
+	mecanumBase.controlOrien = mecanumBase.KOp * mecanumBase.errOrien + mecanumBase.KOd * mecanumBase.derivativeOrien; //+ mecanumBase.KOi * mecanumBase.integralOrien;
+	mecanumBase.errPrevOrien = mecanumBase.errOrien;
+}
 
 /* USER CODE END 4 */
 

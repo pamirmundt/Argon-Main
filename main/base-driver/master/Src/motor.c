@@ -6,13 +6,12 @@ extern UART_HandleTypeDef huart2;
 //	I2C Commands
 //********************
 void i2c_master_transmit(uint16_t slaveAddr){
-	while(HAL_I2C_Master_Transmit_IT(&hi2c1, slaveAddr, (uint8_t*)txBuffer, TXBUFFERSIZE) != HAL_OK);		
-	while(HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY);
-		
+	while(HAL_I2C_Master_Transmit_DMA(&hi2c1, slaveAddr, (uint8_t*)txBuffer, TXBUFFERSIZE) != HAL_OK);		
+	while(HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY);		
 }
 
 void i2c_master_receive(uint16_t slaveAddr){
-	while(HAL_I2C_Master_Receive_IT(&hi2c1, slaveAddr, (uint8_t*)rxBuffer, RXBUFFERSIZE) != HAL_OK);
+	while(HAL_I2C_Master_Receive_DMA(&hi2c1, slaveAddr, (uint8_t*)rxBuffer, RXBUFFERSIZE) != HAL_OK);
 	while(HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY);
 }
 
