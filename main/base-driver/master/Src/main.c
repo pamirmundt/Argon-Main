@@ -36,13 +36,14 @@
 /* USER CODE BEGIN Includes */
 #include <math.h>
 
-#include "motor.h"
 #include "base.h"
+#include "i2c.h"
 
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
+I2C_HandleTypeDef hi2c2;
 DMA_HandleTypeDef hdma_i2c1_rx;
 DMA_HandleTypeDef hdma_i2c1_tx;
 
@@ -52,24 +53,27 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-void calcPID(void);
 
-//I2C RX/TX Buffer
-const uint16_t RXBUFFERSIZE = 12;		//Receive buffer size
-const uint16_t TXBUFFERSIZE = 13;		//Transmit buffer size
-uint8_t txBuffer[TXBUFFERSIZE];
-uint8_t rxBuffer[RXBUFFERSIZE];
+/* Timeout values for flags and events waiting loops. These timeouts are
+   not based on accurate values, they just guarantee that the application will
+   not remain stuck if the I2C communication is corrupted. */
+#define FLAG_TIMEOUT ((int)0x1000)
+#define LONG_TIMEOUT ((int)0x8000)
+
+//Timers
+//Timer 9 - 90MHz
+//180Mhz/60000/30 = 100Hz
 
 //Base and motor
 //Base MAX SPEED = 0.97m/s
 Motor motorFL, motorFR, motorRL, motorRR;
-Base mecanumBase;
+Base mecanumBase, initBase;
 
 //Slave wheel I2C Addresses
-const uint16_t FRwheelAddr = 0x40;
-const uint16_t FLwheelAddr = 0x42;
-const uint16_t RRwheelAddr = 0x44;
-const uint16_t RLwheelAddr = 0x46;
+const uint16_t FLwheelAddr = 0x40;
+const uint16_t FRwheelAddr = 0x42;
+const uint16_t RLwheelAddr = 0x44;
+const uint16_t RRwheelAddr = 0x46;
 
 //Control configurations
 //100Hz PID postion control
@@ -85,6 +89,7 @@ const float KOp = 0.6f, KOi = 0.0f, KOd = 0.0001f;
 
 //Torque to velocity constant
 const float Ktv = 100000.0f;
+
 	
 /* USER CODE END PV */
 
@@ -95,10 +100,16 @@ static void MX_DMA_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_TIM9_Init(void);
+static void MX_I2C2_Init(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 void baseInit(void);
+void calcPID(void);
+int read(char *data, int length);
+int write(const char *data, int length);
+int i2c_slave_read(I2C_HandleTypeDef *I2cHandle, char *data, int length);
+int i2c_slave_write(I2C_HandleTypeDef *I2cHandle, const char *data, int length);
 
 /* USER CODE END PFP */
 
@@ -125,18 +136,22 @@ int main(void)
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_I2C1_Init();
-  MX_USART2_UART_Init();
+  //MX_USART2_UART_Init();
   MX_TIM9_Init();
+  MX_I2C2_Init();
 
   /* USER CODE BEGIN 2 */
 	
-	//Initialize Base
-	baseInit();
+	//Initialize Base and wheel addresses
+	motorFL.slaveAddr = FLwheelAddr;
+	motorFR.slaveAddr = FRwheelAddr;
+	motorRL.slaveAddr = RLwheelAddr;
+	motorRR.slaveAddr = RRwheelAddr;
+
+	base_init(&mecanumBase, &motorFL, &motorFR, &motorRL, &motorRR);
 	
-	//Control Interrupt Init
-	//Timer 9 - 90MHz
-	//180Mhz/60000/30 = 100Hz
-	HAL_TIM_Base_Start_IT(&htim9);
+	//Default Control Mode: Velocity Control (0x01)
+	base_setControlMode(&mecanumBase, 1);
 	
   /* USER CODE END 2 */
 
@@ -144,30 +159,71 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+		//I2C-2 Receive/Transmit	
+		int hi2c2State = hi2c2_get_state();
+		
+		switch (hi2c2State) {
+			case ReadAddressed: {
+				write(hi2c2TXBuffer, hi2c2TXBUFFERSIZE);
+				while(HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY);
+			} break;
+			
+			case WriteAddressed : {
+				//Check for the first byte if RPI-master is writing or reading
+				/*	Issue: Raspberry Pi smbus-protocol is always sending a "register" byte
+										at the start of the buffer before reading/writing. So it has to
+										be dumped or used. In this case it has been used to understand 
+										if the master is going to write or read.
+													1.Byte -> 0:masterWriting, 1:masterReading
+				*/
+				
+				//Read first byte to temporarity buffer (char array)
+				char temp[1];
+				read(temp, 1);
+				while(HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY);
+				
+				//First byte of message
+				uint8_t reg;
+				memcpy(&reg, &temp[0], sizeof(reg));
+				
+				//If master is writing
+				if(reg == 0x00){
+					read(hi2c2RXBuffer, (hi2c2RXBUFFERSIZE));
+					while(HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY);
+					
+					slaveCmdParser();
+				}
+				
+			} break;
+		}
+		
 		//Update Base Position
-		base_getPosition(&mecanumBase, &mecanumBase.longitudinalPosition, &mecanumBase.transversalPosition, &mecanumBase.orientation);
+		base_getUpdatePosition(&mecanumBase, &mecanumBase.longitudinalPosition, &mecanumBase.transversalPosition, &mecanumBase.orientation);
+			
 		
-		
-		//Set wheel velocity(RPM)
-		motor_setRPM(motorFL, mecanumBase.wheelTorques[0]*Ktv);
-		motor_setRPM(motorFR, mecanumBase.wheelTorques[1]*Ktv);
-		motor_setRPM(motorRL, mecanumBase.wheelTorques[2]*Ktv);
-		motor_setRPM(motorRR, mecanumBase.wheelTorques[3]*Ktv);
-		
+		//Position Control Mode
+		if(mecanumBase.controlMode == 0x02){
+			//Set wheel velocity(RPM)
+			motor_setRPM(motorFL, mecanumBase.wheelTorques[0]*Ktv);
+			motor_setRPM(motorFR, mecanumBase.wheelTorques[1]*Ktv);
+			motor_setRPM(motorRL, mecanumBase.wheelTorques[2]*Ktv);
+			motor_setRPM(motorRR, mecanumBase.wheelTorques[3]*Ktv);
+		}
 		
 		//DEBUG ONLY
-		//base_setVelocity(mecanumBase, 0.01f, 0.0f, 0.0f);
+		//base_setVelocity(mecanumBase, 0.0f, 0.0f, 0.1f);
 		//base_getVelocity(mecanumBase, &longitudinalVelocity, &transversalVelocity, &angularVelocity);
 		
 		//Serial Print
-		char str[60];
-		int test1 = mecanumBase.controlLong*1000;
-		int test2 = mecanumBase.refLongitudinalPosition*1000;
-		int test3 = mecanumBase.errLong*1000;
+		//char str[60];
+		//int test1 = mecanumBase.controlLong*1000;
+		//int test2 = mecanumBase.refLongitudinalPosition*1000;
+		//int test3 = mecanumBase.errLong*1000;
 		//sprintf(str,"$%d %d %d;", test1, test2, test3);
-		sprintf(str,"%f %f %f \n", mecanumBase.longitudinalPosition, mecanumBase.transversalPosition, mecanumBase.orientation);
-		HAL_UART_Transmit_IT(&huart2,(uint8_t*)str, strlen(str));
+		//sprintf(str,"%f %f %f \n", mecanumBase.longitudinalPosition, mecanumBase.transversalPosition, mecanumBase.orientation);
+		//HAL_UART_Transmit_IT(&huart2,(uint8_t*)str, strlen(str));
 		
+		HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
@@ -236,6 +292,25 @@ void MX_I2C1_Init(void)
 
 }
 
+/* I2C2 init function */
+void MX_I2C2_Init(void)
+{
+
+  hi2c2.Instance = I2C2;
+  hi2c2.Init.ClockSpeed = 400000;
+  hi2c2.Init.DutyCycle = I2C_DUTYCYCLE_2;
+  hi2c2.Init.OwnAddress1 = 0x40;
+  hi2c2.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c2.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c2.Init.OwnAddress2 = 0;
+  hi2c2.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c2.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  HAL_I2C_Init(&hi2c2);
+	
+	/* Enable Address Acknowledge */
+	hi2c2.Instance->CR1 |= I2C_CR1_ACK;
+}
+
 /* TIM9 init function */
 void MX_TIM9_Init(void)
 {
@@ -245,7 +320,7 @@ void MX_TIM9_Init(void)
   htim9.Instance = TIM9;
   htim9.Init.Prescaler = 60000;
   htim9.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim9.Init.Period = 29;
+  htim9.Init.Period = 14;
   htim9.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   HAL_TIM_Base_Init(&htim9);
 
@@ -326,56 +401,125 @@ void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
-/**
-  * @brief  Initialize Base
-							- Reset wheels
-							-	Reset base parameters
-  * @param  None
-  * @retval None
-  */
-void baseInit(){
-	//Reset wheel instances
-	memset(&motorFL, 0, sizeof(motorFL));
-	memset(&motorFR, 0, sizeof(motorFR));
-	memset(&motorRL, 0, sizeof(motorRL));
-	memset(&motorRR, 0, sizeof(motorRR));
-	
-	//Reset base instance
-	memset(&mecanumBase, 0, sizeof(mecanumBase));
-	
-	//Init motors	i2c addresses
-	motorFL.slaveAddr = FLwheelAddr;
-	motorFR.slaveAddr = FRwheelAddr;
-	motorRL.slaveAddr = RLwheelAddr;
-	motorRR.slaveAddr = RRwheelAddr;
-	
-	//Set motors
-	mecanumBase.frontLeftWheel = motorFL;
-	mecanumBase.frontRightWheel = motorFR;
-	mecanumBase.rearLeftWheel = motorRL;
-	mecanumBase.rearRightWheel = motorRR;
-	
-	//Reset Wheels
-	motor_reset(motorFL);
-	motor_reset(motorFR);
-	motor_reset(motorRL);
-	motor_reset(motorRR);
-	
-	//Set PID constants
-	//Longitudinal PID Constants
-	mecanumBase.KLp = KLp;
-	mecanumBase.KLi = KLi;
-	mecanumBase.KLd = KLd;
-	
-	//Transversal PID Constants
-	mecanumBase.KTp = KTp;
-	mecanumBase.KTi = KTi;
-	mecanumBase.KTd = KTd;
-	
-	//Orientation PID Constants
-	mecanumBase.KOp = KOp;
-	mecanumBase.KOi = KOi;
-	mecanumBase.KOd = KOd;
+int read(char *data, int length) {
+    return i2c_slave_read(&hi2c2, data, length) != length;
+}
+
+int i2c_slave_read(I2C_HandleTypeDef *I2cHandle, char *data, int length)
+{
+    uint32_t Timeout;
+    int size = 0;
+
+    while (length > 0) {
+        // Wait until RXNE flag is set
+        // Wait until the byte is received
+        Timeout = FLAG_TIMEOUT;
+        while (__HAL_I2C_GET_FLAG(I2cHandle, I2C_FLAG_RXNE) == RESET) {
+            Timeout--;
+            if (Timeout == 0) {
+                return -1;
+            }
+        }
+
+        // Read data from DR
+        (*data++) = I2cHandle->Instance->DR;
+        length--;
+        size++;
+
+        if ((__HAL_I2C_GET_FLAG(I2cHandle, I2C_FLAG_BTF) == SET) && (length != 0)) {
+            // Read data from DR
+            (*data++) = I2cHandle->Instance->DR;
+            length--;
+            size++;
+        }
+    }
+
+    // Wait until STOP flag is set
+    Timeout = FLAG_TIMEOUT;
+    while (__HAL_I2C_GET_FLAG(I2cHandle, I2C_FLAG_STOPF) == RESET) {
+        Timeout--;
+        if (Timeout == 0) {
+            return -1;
+        }
+    }
+
+    // Clear STOP flag
+    __HAL_I2C_CLEAR_STOPFLAG(I2cHandle);
+
+    // Wait until BUSY flag is reset 
+    Timeout = FLAG_TIMEOUT;
+    while (__HAL_I2C_GET_FLAG(I2cHandle, I2C_FLAG_BUSY) == SET) {
+        Timeout--;
+        if (Timeout == 0) {
+            return -1;
+        }
+    }
+
+    return size;
+}
+
+int write(const char *data, int length) {
+    return i2c_slave_write(&hi2c2, data, length) != length;
+}
+
+int i2c_slave_write(I2C_HandleTypeDef *I2cHandle, const char *data, int length)
+{
+    uint32_t Timeout;
+    int size = 0;
+
+    while (length > 0) {
+        /* Wait until TXE flag is set */
+        Timeout = FLAG_TIMEOUT;
+        while (__HAL_I2C_GET_FLAG(I2cHandle, I2C_FLAG_TXE) == RESET) {
+            Timeout--;
+            if (Timeout == 0) {
+                return -1;
+            }
+        }
+
+
+        /* Write data to DR */
+        I2cHandle->Instance->DR = (*data++);
+        length--;
+        size++;
+
+        if ((__HAL_I2C_GET_FLAG(I2cHandle, I2C_FLAG_BTF) == SET) && (length != 0)) {
+            /* Write data to DR */
+            I2cHandle->Instance->DR = (*data++);
+            length--;
+            size++;
+        }
+    }
+
+    /* Wait until AF flag is set */
+    Timeout = FLAG_TIMEOUT;
+    while (__HAL_I2C_GET_FLAG(I2cHandle, I2C_FLAG_AF) == RESET) {
+        Timeout--;
+        if (Timeout == 0) {
+            return -1;
+        }
+    }
+
+
+    /* Clear AF flag */
+    __HAL_I2C_CLEAR_FLAG(I2cHandle, I2C_FLAG_AF);
+
+
+    /* Wait until BUSY flag is reset */
+    Timeout = FLAG_TIMEOUT;
+    while (__HAL_I2C_GET_FLAG(I2cHandle, I2C_FLAG_BUSY) == SET) {
+        Timeout--;
+        if (Timeout == 0) {
+            return -1;
+        }
+    }
+
+    I2cHandle->State = HAL_I2C_STATE_READY;
+
+    /* Process Unlocked */
+    __HAL_UNLOCK(I2cHandle);
+
+    return size;
 }
 
 /**

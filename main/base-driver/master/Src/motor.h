@@ -8,7 +8,9 @@
 #include "stm32f4xx_hal.h"
 #include <stdint.h>
 #include <string.h>
+#include "i2c.h"
 
+/*
 //Set Motor Configuration and Function Commands
 #define CMD_RESET 				0x02
 #define CMD_SET_SPEED			0x03	//Velocity control mode Only
@@ -24,27 +26,13 @@
 #define CMD_GET_SPEED 		0x13
 #define CMD_GET_PWM 			0x14
 #define CMD_GET_REF_SPEED 0x15
-
-//I2C Variables
-extern I2C_HandleTypeDef hi2c1;
-extern const uint16_t RXBUFFERSIZE;		//Receive buffer size
-extern const uint16_t TXBUFFERSIZE;		//Transmit buffer size
-extern uint8_t txBuffer[];
-extern uint8_t rxBuffer[];
+*/
 
 typedef struct{
 	uint16_t slaveAddr;
 	int32_t lastEncPos;
-  //uint16_t wheelNum;
-	//bool lastWheelPositionInitialized;
 }Motor;
 
-//********************
-//	I2C Commands
-//********************
-void i2c_master_transmit(uint16_t slaveAddr);
-	
-void i2c_master_receive(uint16_t slaveAddr);
 
 //********************
 //	Set Commands
@@ -53,7 +41,6 @@ void i2c_master_receive(uint16_t slaveAddr);
 //Resets the motor variables and sets PID constants to default value
 //@param Motor
 void motor_reset(Motor m);
-
 
 //Sets the Reference RPM of the wheel
 //Needs to be switched to velocity control mode(2) before sending command
