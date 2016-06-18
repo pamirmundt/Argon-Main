@@ -56,10 +56,10 @@ TIM_HandleTypeDef htim16;
 //I2C Configurations
 #define NoData         0 // the slave has not been addressed
 #define ReadAddressed  1 // the master has requested a read from this slave (slave = transmitter)
-#define WriteGeneral   2 // the master is writing to all slave
+//#define WriteGeneral 2 // the master is writing to all slave
 #define WriteAddressed 3 // the master is writing to this slave (slave = receiver)
 //This device is a SLAVE
-#define I2C_ADDRESS      	0x46			//STM32 HAL library bitwise right shifts the address
+#define I2C_ADDRESS      	0x40			//STM32 HAL library bitwise right shifts the address
 
 //I2C RX/TX Buffer
 const uint16_t RXBUFFERSIZE = 13;		//Receive buffer size
@@ -67,14 +67,13 @@ const uint16_t TXBUFFERSIZE = 12;		//Transmit buffer size
 uint8_t txBuffer[TXBUFFERSIZE];
 uint8_t rxBuffer[RXBUFFERSIZE];
 
-
 //**********************************************
 //Motor Control Configurations
 //**********************************************
 
 //Timer Configurations
 	//Timer2 (64Mhz)  - Encoder Mode (4x)
-	//Timer3 (64Mhz)  - Interrupt - 200Hz
+	//Timer3 (64Mhz)  - Interrupt - 1kHz
 	//Timer16 (64Mhz) - PWM
 
 //Nucleo F303K8 Pin Configurations
@@ -96,12 +95,27 @@ Motor m;
 const float encoderRes = 334.0f;	//Encoder Resolution 334 pulse/rotation
 const float gearRatio = 13.552f;  //Gear Ratio 1:13.552
 
-//Control Period / Frequency (RPM and PID Calculation, Motor PWM)
-const float contPeriod = 1.0f/200.0f;
+//Control Period = 1 / Frequency (RPM and PID Calculation, Motor PWM)
+//DO NOT CHANGE THIS VALUE HERE
+const float contPeriod = 1.0f/1000.0f;
 
-//Default Kp, Ki, Kd
-float Kp = 0.15f;
-float Ki = 3.5f;
+
+//DEFAULT PID Constants
+//Front Left Motor
+//5.0 - 25.0 - 0.0
+
+//Front Right Motor
+//5.0 - 25.0 - 0.0
+
+//Real Left Motor
+//7.0 - 25.0 - 0.0
+
+//Rear Right Motor
+//7.0 - 25.0 - 0.0
+
+//DEFAULT PID CONSTANTS
+float Kp = 5.0f;
+float Ki = 25.0f;
 float Kd = 0.0f;
 
 //PWM Resolution (DO NOT CHANGE THIS VALUE)
@@ -204,9 +218,7 @@ int main(void)
 				while(HAL_I2C_Slave_Transmit_IT(&hi2c1, (uint8_t*)txBuffer, TXBUFFERSIZE) != HAL_OK);
 				while(HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY);
 			} break;
-			case WriteGeneral:
-				 cmdParser();
-				 break;
+			
 			case WriteAddressed:
 				while(HAL_I2C_Slave_Receive_IT(&hi2c1, (uint8_t*)rxBuffer, RXBUFFERSIZE) != HAL_OK);
 				while(HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY);
@@ -265,7 +277,7 @@ void MX_I2C1_Init(void)
 {
 
   hi2c1.Instance = I2C1;
-  hi2c1.Init.Timing = 0x00602173;
+  hi2c1.Init.Timing = 0x00300B29;
   hi2c1.Init.OwnAddress1 = I2C_ADDRESS;
   hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -278,6 +290,10 @@ void MX_I2C1_Init(void)
     /**Configure Analogue filter 
     */
   HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE);
+
+    /**I2C Fast mode Plus enable 
+    */
+  __HAL_SYSCFG_FASTMODEPLUS_ENABLE(I2C_FASTMODEPLUS_I2C1);
 
 }
 
@@ -318,9 +334,9 @@ void MX_TIM3_Init(void)
   TIM_MasterConfigTypeDef sMasterConfig;
 
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 64000;
+  htim3.Init.Prescaler = 16000;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 4;
+  htim3.Init.Period = 3;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   HAL_TIM_Base_Init(&htim3);
 
@@ -421,7 +437,7 @@ void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 /**
-  * @brief  Timer 3 Interrupt at 200Hz. Calculate RPM, calculate PID and drive motor
+  * @brief  Timer 3 Interrupt at 1kHz. Calculate RPM, calculate PID and drive motor
   * @param  htim pointer
   * @retval None
   */
@@ -467,8 +483,8 @@ void motorInit(){
 }
 
 /**
-  * @brief  Calculates RPM. Count the encoder tick every 'contPeriod' (200Hz - 0.005sec)
-	*							count_per_minute = (1min/0.005sec)*countDifference
+  * @brief  Calculates RPM. Count the encoder tick every 'contPeriod' (1kHz - 0.001sec)
+	*							count_per_minute = (1min/0.001sec)*countDifference
 	*							4xRPM = count_per_minute / encoderResolution
 	*							RPM = 4xRPM/4 (4x Encoding)
   * @param  None

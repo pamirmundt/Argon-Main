@@ -9,21 +9,27 @@ extern uint8_t rxBuffer[];
 
 extern void motorInit(void);
 
-//Set Motor Configuration and Function Commands
-#define CMD_RESET 				0x02
-#define CMD_SET_SPEED			0x03	//Velocity control mode Only
-#define CMD_SET_PID_CONST	0x04
-#define CMD_SET_POWER			0x05	//Manuel mode only
-#define CMD_SET_PWM				0x06	//Manuel mode only
-#define CMD_SET_MODE			0x07
+//Set Base Configuration and Function Commands
+//Joint Commands
+#define CMD_RESET_JOINT 						0x02
+#define CMD_SET_JOINT_PWM						0x03	//Manuel mode
+#define CMD_SET_JOINT_SPEED					0x04	//Velocity mode
+#define CMD_SET_JOINT_POWER					0x05	//Manuel mode
+
+//Control Mode
+#define CMD_SET_CONT_MODE						0x10	//Manuel/Velocity/Position Mode
+//PID
+#define CMD_SET_VEL_PID_CONST				0x20
+#define CMD_GET_VEL_PID_CONST				0x22
 
 //Get Motor Configurations and Status
-#define CMD_GET_PID 			0x10
-#define CMD_GET_POWER 		0x11
-#define CMD_GET_POS 			0x12
-#define CMD_GET_SPEED 		0x13
-#define CMD_GET_PWM 			0x14
-#define CMD_GET_REF_SPEED 0x15
+//Joint Commands
+#define CMD_GET_JOINT_PWM 					0x25
+#define CMD_GET_JOINT_POS						0x26	//Encoder count
+#define CMD_GET_JOINT_SPEED					0x27	//RPM
+#define CMD_GET_JOINT_POWER					0x28	//0-100%
+#define CMD_GET_JOINT_REF_SPEED			0x29
+
 
 //rxBuffer - Receive Buffer - 13 Byte
 //	1 Byte	|				4 Bytes				|					4 Bytes			|				4 Bytes				|
@@ -43,19 +49,20 @@ void cmdParser(){
 	
 	switch(cmd[0]){
     //***** SET Commands *****
-    case CMD_RESET: {
+    case CMD_RESET_JOINT: {
+			__HAL_TIM_SET_COUNTER(&htim2, 0);	//RESET encoder counter
+			memset(&m, 0, sizeof(Motor));
 			motorInit();
-			memset(&m, 0, sizeof(m));
     } break;
 		
-		case CMD_SET_SPEED: {
+		case CMD_SET_JOINT_SPEED: {
 			//@Set Reference velocity as RPM (Float)
 			float params[1] = {0};
 			memcpy(&params[0], &rxBuffer[1], sizeof(float));
 			m.refRPM = params[0];
 		} break;
 		
-		case CMD_SET_PID_CONST: {
+		case CMD_SET_VEL_PID_CONST: {
 			//@Set proportional Constant (Float)
 			//@Set integral Constant (Float)
 			//@Set derivative Constant (Float)
@@ -68,7 +75,7 @@ void cmdParser(){
 			m.Kd = params[2];
 		} break;
 
-		case CMD_SET_POWER: {
+		case CMD_SET_JOINT_POWER: {
 			//@Set Power between -100% 100% (Float)
 			float params[1] = {0};
 			memcpy(&params[0], &rxBuffer[1], sizeof(float));
@@ -81,14 +88,14 @@ void cmdParser(){
 			m.PWM = (PWM_resolution/100.0f)*params[0];			
 		} break;
 		
-		case CMD_SET_PWM: {
+		case CMD_SET_JOINT_PWM: {
 			//@Set PWM <-> Direction (Float)
 			float params[1] = {0};
 			memcpy(&params[0], &rxBuffer[1], sizeof(float));
 			m.PWM = params[0];
 		} break;
 		
-		case CMD_SET_MODE: {
+		case CMD_SET_CONT_MODE: {
 			//@Set Mode (uint8_t)
 			//Manuel Mode: 				0x00
 			//Velocity PID Mode: 	0x01
@@ -98,7 +105,7 @@ void cmdParser(){
 		} break;
 		
 		//***** GET Commands *****
-		case CMD_GET_PID: {
+		case CMD_GET_VEL_PID_CONST: {
 			//@Get proportional Constant (Float)
 			//@Get integral Constant (Float)
 			//@Get derivative Constant (Float)
@@ -111,35 +118,35 @@ void cmdParser(){
 			memcpy(&txBuffer[8], &params[2], sizeof(float));
 		} break;
 		
-		case CMD_GET_POWER: {
+		case CMD_GET_JOINT_POWER: {
 			//@Get Power (float) -100% 100%
 			float params[1] = {0};
 			params[0] = (m.PWM/PWM_resolution)*100.0f;
 			memcpy(&txBuffer[0], &params[0], sizeof(float));
 		} break;
 		
-		case CMD_GET_POS: {
+		case CMD_GET_JOINT_POS: {
 			//@Get encoder position (int32_t)
 			int32_t params[1] = {0};
 			params[0] = m.encPos;
 			memcpy(&txBuffer[0], &params[0], sizeof(int32_t));
 		} break;
 		
-		case CMD_GET_SPEED: {
+		case CMD_GET_JOINT_SPEED: {
 			//@Get speed(RPM) (float)
 			float params[1] = {0};
 			params[0] = m.RPM;
 			memcpy(&txBuffer[0], &params[0], sizeof(float));
 		} break;
 		
-		case CMD_GET_PWM: {
+		case CMD_GET_JOINT_PWM: {
 			//@Get PWM (float)
 			float params[1] = {0};
 			params[0] = m.PWM;
 			memcpy(&txBuffer[0], &params[0], sizeof(float));
 		} break;
 			
-		case CMD_GET_REF_SPEED: {
+		case CMD_GET_JOINT_REF_SPEED: {
 			//@Get Reference Speed (float)
 			float params[1] = {0};
 			params[0] = m.refRPM;
