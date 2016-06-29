@@ -1,0 +1,140 @@
+kk<head>
+
+
+    <title>Kopernick Robotics</title>
+
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+</head>
+
+<body>
+
+
+
+
+    <div class="container">
+
+        <h1>Kopernik Robotics</h1>
+
+
+
+        <div class="row" style="margin-top:100px;">
+
+
+            <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+                <div class="panel panel-default">
+                    <div class="panel-heading" role="tab" id="headingOne">
+                        <h4 class="panel-title">
+                            <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                Joint Set Speed
+                            </a>
+                        </h4>
+                    </div>
+                    <div id="collapseOne" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="headingOne">
+                        <div class="panel-body">
+
+
+                            <div class="col-sm-3">
+                                <input id="js-arg1" type="text" class="form-control" placeholder="ARG1">
+                            </div>
+
+                            <div class="col-sm-3">
+                                <input id="js-arg2" type="text" class="form-control" placeholder="ARG2">
+                            </div>
+                            <div class="col-sm-3">
+                                <input id="js-arg3" type="text" class="form-control" placeholder="ARG3">
+                            </div>
+                            <div class="col-sm-3">
+                                <input id="js-arg4" type="text" class="form-control" placeholder="ARG4">
+                            </div>
+
+                            <div class="clearfix"></div>
+                            <hr>
+
+                            <div class="col-sm-3">
+                                <button id="js-run" class="btn btn-large">Execute</button>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+                <div class="panel panel-default">
+                    <div class="panel-heading" role="tab" id="headingTwo">
+                        <h4 class="panel-title">
+                            <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                Collapsible Group Item #2
+                            </a>
+                        </h4>
+                    </div>
+                    <div id="collapseTwo" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
+                        <div class="panel-body">
+                            Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor, sunt aliqua put a bird on it squid single-origin coffee nulla assumenda shoreditch et. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident. Ad vegan excepteur butcher vice lomo. Leggings occaecat craft beer farm-to-table, raw denim aesthetic synth nesciunt you probably haven't heard of them accusamus labore sustainable VHS.
+                        </div>
+                    </div>
+                </div>
+                <div class="panel panel-default">
+                    <div class="panel-heading" role="tab" id="headingThree">
+                        <h4 class="panel-title">
+                            <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                Collapsible Group Item #3
+                            </a>
+                        </h4>
+                    </div>
+                    <div id="collapseThree" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingThree">
+                        <div class="panel-body">
+                            Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor, sunt aliqua put a bird on it squid single-origin coffee nulla assumenda shoreditch et. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident. Ad vegan excepteur butcher vice lomo. Leggings occaecat craft beer farm-to-table, raw denim aesthetic synth nesciunt you probably haven't heard of them accusamus labore sustainable VHS.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            
+
+
+
+
+
+        <div class="button-group" hidden>
+                <input class="btn btn-success" type="button" value="On" onclick="go('setSpeed','-0.1','0','0')" style="font-size:200%;">
+                <input class="btn btn-danger" type="button" value="Off" onclick="go('s')" style="font-size:200%;">
+        </div>
+
+
+
+
+</div>
+
+
+<script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+
+<script src="//ajax.googleapis.com/ajax/libs/prototype/1.7.1.0/prototype.js"></script>
+
+<script type="text/javascript">
+
+    var functionName = $('#js-function-name').val();
+    var arg1 = $('#js-arg1').val();
+    var arg2 = $('#js-arg2').val();
+    var arg3 = $('#js-arg3').val();
+    var arg4 = $('#js-arg4').val();
+
+    $('#js-run').on('click',function(){
+        new Ajax.Request('doStuff.py?q=' + functionName + '&arg1=' + arg1 + '&arg2=' + arg2 + '&arg3='+ arg3 + '&arg4='+ arg4,
+                {method: 'GET'}
+        );
+    });
+
+
+    function go(qry,sp1,sp2,sp3) {
+        new Ajax.Request('doStuff.py?q=' + qry + '&longSpeed=' + sp1 + '&tranSpeed=' + sp2 + '&angSpeed='+ sp3,
+                {method: 'GET'}
+        );
+    }
+</script>
+
+<!-- Latest compiled and minified JavaScript -->
+</body>
+
+
