@@ -507,7 +507,7 @@ void calcPID(){
   m.integral = m.integral + m.errRPM*contPeriod;
 	//Velocity Control -> PI Control
   //m.derivative = (m.errRPM - m.errPrevRPM)/contPeriod;
-  m.control = Kp*m.errRPM + Ki*m.integral;//+ Kd*m.derivative;
+  m.control = m.Kp*m.errRPM + m.Ki*m.integral;//+ Kd*m.derivative;
   m.errPrevRPM = m.errRPM;
 }
 
