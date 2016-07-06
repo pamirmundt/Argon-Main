@@ -23,10 +23,10 @@
 //Control Mode
 #define CMD_SET_CONT_MODE				0x10
 //PID
-#define CMD_SET_VEL_PID_CONST				0x20	//NYI
-#define CMD_SET_POS_PID_CONST				0x21	//NYI
-#define CMD_GET_VEL_PID_CONST				0x22	//NYI
-#define CMD_GET_POS_PID_CONST				0x23	//NYI
+#define CMD_SET_VEL_PID_CONST				0x20
+#define CMD_SET_POS_PID_CONST				0x21
+#define CMD_GET_VEL_PID_CONST				0x22
+#define CMD_GET_POS_PID_CONST				0x23
 
 //Get Motor Configurations and Status
 //Joint Commands
@@ -62,8 +62,12 @@ int joint_setPower(float fl_pwr, float fr_pwr, float rl_pwr, float rr_pwr);
 
 int base_reset(void);
 int base_setSpeed(float longVel, float tranVel, float angVel);
+int set_VelPIDConst(uint8_t motorNum, float PConst, float IConst, float DConst);
+int set_PosPIDConst(uint8_t mode, float PConst, float IConst, float DConst);
 int set_ControlMode(uint8_t mode);
 
+int get_VelPIDConst(uint8_t motorNum, float PIDConsts[]);
+int get_PosPIDConst(uint8_t mode, float PIDConsts[]);
 int joint_getPos(int32_t jointPos[]);
 int joint_getPWM(float jointPWM[]);
 int joint_getSpeed(float jointSpeed[]);
@@ -173,6 +177,32 @@ static PyObject* baseSetSpeed(PyObject *self, PyObject *args)
 	return Py_BuildValue("i", err);
 }
 
+static PyObject* setVelPIDConst(PyObject *self, PyObject *args)
+{
+	int err;
+	uint8_t motorNum;
+	float PIDConsts[3] = {0};
+	if (!PyArg_ParseTuple(args, "ifff", &motorNum, &PIDConsts[0], &PIDConsts[1], &PIDConsts[2]))
+        	return NULL;
+
+	err = set_VelPIDConst(motorNum, PIDConsts[0], PIDConsts[1], PIDConsts[2]);
+			
+	return Py_BuildValue("i", err);
+}
+
+static PyObject* setPosPIDConst(PyObject *self, PyObject *args)
+{
+	int err;
+	uint8_t mode;
+	float PIDConsts[3] = {0};
+	if (!PyArg_ParseTuple(args, "ifff", &mode, &PIDConsts[0], &PIDConsts[1], &PIDConsts[2]))
+        	return NULL;
+
+	err = set_PosPIDConst(mode, PIDConsts[0], PIDConsts[1], PIDConsts[2]);
+			
+	return Py_BuildValue("i", err);
+}
+
 static PyObject* setControlMode(PyObject *self, PyObject *args)
 {
 	int err;
@@ -184,6 +214,57 @@ static PyObject* setControlMode(PyObject *self, PyObject *args)
 	err = set_ControlMode(mode);
 
 	return Py_BuildValue("i", err);
+}
+
+static PyObject* getVelPIDConst(PyObject *self, PyObject *args)
+{
+	float PIDConsts[3] = {};
+	uint8_t motorNum;
+
+	//MotorNum:0 - Front Left Motor
+	//MotorNum:1 - Front Right Motor
+	//MotorNum:2 - Rear Left Motor
+	//MotorNum:3 - Rear Right Motor
+	if (!PyArg_ParseTuple(args, "i", &motorNum))
+        	return NULL;	
+
+	PyObject * pylist = PyList_New(3);
+
+	if(get_VelPIDConst(motorNum, PIDConsts) == -1)
+		return Py_None;
+
+	int i;
+	for(i = 0; i < 3; i++){
+		PyObject * item = Py_BuildValue("f", PIDConsts[i]);
+		PyList_SET_ITEM(pylist, i, item);
+	}
+
+	return pylist;
+}
+
+static PyObject* getPosPIDConst(PyObject *self, PyObject *args)
+{
+	float PIDConsts[3] = {};
+	uint8_t mode;
+
+	//Mode:0 - Longitudal PID Constants
+	//Mode:1 - Transversal PID Constants
+	//Mode:2 - Angular PID Constants
+	if (!PyArg_ParseTuple(args, "i", &mode))
+        	return NULL;	
+
+	PyObject * pylist = PyList_New(3);
+
+	if(get_PosPIDConst(mode, PIDConsts) == -1)
+		return Py_None;
+
+	int i;
+	for(i = 0; i < 3; i++){
+		PyObject * item = Py_BuildValue("f", PIDConsts[i]);
+		PyList_SET_ITEM(pylist, i, item);
+	}
+
+	return pylist;
 }
 
 static PyObject* jointGetPos(PyObject *self, PyObject *args)
@@ -259,6 +340,24 @@ static PyObject* jointGetPower(PyObject *self, PyObject *args)
 	return pylist;
 }
 
+static PyObject* jointGetRefSpeed(PyObject *self, PyObject *args)
+{
+	float jointPower[4] = {};
+
+	PyObject * pylist = PyList_New(4);
+
+	if(joint_getRefSpeed(jointPower) == -1)
+		return Py_None;
+
+	int i;
+	for(i = 0; i < 4; i++){
+		PyObject * item = Py_BuildValue("f", jointPower[i]);
+		PyList_SET_ITEM(pylist, i, item);
+	}
+
+	return pylist;
+}
+
 static PyObject* baseGetPos(PyObject *self, PyObject *args)
 {
 	float basePosition[3] = {};
@@ -304,11 +403,16 @@ static PyMethodDef i2cMethods[] = {
 	{"jointSetPower", jointSetPower, METH_VARARGS},
 	{"baseReset", baseReset, METH_VARARGS},
 	{"baseSetSpeed", baseSetSpeed, METH_VARARGS},
+	{"getVelPIDConst", getVelPIDConst, METH_VARARGS},
+	{"setVelPIDConst", setVelPIDConst, METH_VARARGS},
+	{"setPosPIDConst", setPosPIDConst, METH_VARARGS},
 	{"setControlMode", setControlMode, METH_VARARGS},
+	{"getPosPIDConst", getPosPIDConst, METH_VARARGS},
 	{"jointGetSpeed", jointGetSpeed, METH_VARARGS},
 	{"jointGetPos", jointGetPos, METH_VARARGS},
 	{"jointGetPWM", jointGetPWM, METH_VARARGS},
 	{"jointGetPower", jointGetPower, METH_VARARGS},
+	{"jointGetRefSpeed", jointGetRefSpeed, METH_VARARGS},
 	{"baseGetPos", baseGetPos, METH_VARARGS},
 	{"baseGetSpeed", baseGetSpeed, METH_VARARGS},
 	{NULL, NULL, 0, NULL}        /* Sentinel */
@@ -428,23 +532,73 @@ int set_ControlMode(uint8_t mode){
 	return err;	
 }
 
-int setVelPIDConst(void){
-	return 0;
+int set_VelPIDConst(uint8_t motorNum, float PConst, float IConst, float DConst){
+	uint8_t buff[TXBUFFERSIZE] = {0};
+	uint8_t CMD = CMD_SET_VEL_PID_CONST;
+	memcpy(&buff[0], &CMD, sizeof(CMD));
+	memcpy(&buff[1], &motorNum, sizeof(motorNum));
+	memcpy(&buff[2], &PConst, sizeof(PConst));
+	memcpy(&buff[6], &IConst, sizeof(IConst));
+	memcpy(&buff[10], &DConst, sizeof(DConst));
+
+	int err = masterWriteBlock(fd, TXBUFFERSIZE, buff);
+	
+	return err;
 }
 
-int setPosPIDConst(void){
-	return 0;
+int set_PosPIDConst(uint8_t mode, float PConst, float IConst, float DConst){
+	uint8_t buff[TXBUFFERSIZE] = {0};
+	uint8_t CMD = CMD_SET_POS_PID_CONST;
+	memcpy(&buff[0], &CMD, sizeof(CMD));
+	memcpy(&buff[1], &mode, sizeof(mode));
+	memcpy(&buff[2], &PConst, sizeof(PConst));
+	memcpy(&buff[6], &IConst, sizeof(IConst));
+	memcpy(&buff[10], &DConst, sizeof(DConst));
+
+	int err = masterWriteBlock(fd, TXBUFFERSIZE, buff);
+	
+	return err;
 }
 
 /********************************
 	Get() Functions
 ********************************/
 
-int getVelPIDConst(void){
+int get_VelPIDConst(uint8_t motorNum, float PIDConsts[]){
+	uint8_t txBuff[TXBUFFERSIZE] = {0};
+	uint8_t CMD = CMD_GET_VEL_PID_CONST;	
+	memset(&txBuff[0], CMD, sizeof(CMD));
+	memset(&txBuff[1], motorNum, sizeof(motorNum));
+
+	masterWriteBlock(fd, TXBUFFERSIZE, txBuff);	
+
+	uint8_t rxBuffer[RXBUFFERSIZE];	
+
+	masterReadBlock(fd, RXBUFFERSIZE, rxBuffer);
+
+	memcpy(&PIDConsts[0], &rxBuffer[0], sizeof(float));	
+	memcpy(&PIDConsts[1], &rxBuffer[4], sizeof(float));	
+	memcpy(&PIDConsts[2], &rxBuffer[8], sizeof(float));	
+
 	return 0;
 }
 
-int getPosPIDConst(void){
+int get_PosPIDConst(uint8_t mode, float PIDConsts[]){
+	uint8_t txBuff[TXBUFFERSIZE] = {0};
+	uint8_t CMD = CMD_GET_POS_PID_CONST;	
+	memset(&txBuff[0], CMD, sizeof(CMD));
+	memset(&txBuff[1], mode, sizeof(mode));
+
+	masterWriteBlock(fd, TXBUFFERSIZE, txBuff);	
+
+	uint8_t rxBuffer[RXBUFFERSIZE];	
+
+	masterReadBlock(fd, RXBUFFERSIZE, rxBuffer);
+
+	memcpy(&PIDConsts[0], &rxBuffer[0], sizeof(float));	
+	memcpy(&PIDConsts[1], &rxBuffer[4], sizeof(float));	
+	memcpy(&PIDConsts[2], &rxBuffer[8], sizeof(float));	
+
 	return 0;
 }
 
