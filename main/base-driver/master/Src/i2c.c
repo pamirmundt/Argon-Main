@@ -237,7 +237,16 @@ void slaveCmdParser(){
 		} break;
 
 		case CMD_GET_JOINT_REF_SPEED:{
-
+			float params[4] = {0};
+			params[0] = motor_getRefSpeed(mecanumBase.frontLeftWheel);
+			params[1] = motor_getRefSpeed(mecanumBase.frontRightWheel);
+			params[2] = motor_getRefSpeed(mecanumBase.rearLeftWheel);
+			params[3] = motor_getRefSpeed(mecanumBase.rearRightWheel);
+			
+			memcpy(&hi2c2TXBuffer[0], &params[0], sizeof(float));
+			memcpy(&hi2c2TXBuffer[4], &params[1], sizeof(float));
+			memcpy(&hi2c2TXBuffer[8], &params[2], sizeof(float));
+			memcpy(&hi2c2TXBuffer[12], &params[3], sizeof(float));
 		} break;
 		
 		//Base Commands

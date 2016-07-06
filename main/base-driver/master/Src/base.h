@@ -88,10 +88,6 @@ void base_init(Base* myBase, Motor* FLwheel, Motor* FRwheel, Motor* RLwheel, Mot
 //@param pointer to mecanum base
 void base_reset(Base* myBase);
 
-void base_start(void); //Not yet implemented
-
-void base_stop(void); //Not yet implemented
-
 void base_setGoal(void); //Not yet implemented
 
 //Get base position on x,y and theta in meters and radians
@@ -120,7 +116,6 @@ void base_setControlMode(Base* myBase, uint8_t mode);
 //@param Derivative constant
 void setPositionPID(Base* myBase, uint8_t mode, float Kp, float Ki, float Kd);
 
-//***********************************************************************************
 //Set Ve1ocity PID Control Constants
 //Velocity control is take careof by each slave
 //@param pointer to mecanum base
@@ -129,7 +124,6 @@ void setPositionPID(Base* myBase, uint8_t mode, float Kp, float Ki, float Kd);
 //				motor:2 - rear left motor
 //				motor:3 - rear right motor
 void setVelocityPID(Base* myBase, uint8_t motor, float Kp, float Ki, float Kd);
-//***********************************************************************************
 
 //Gets the cartesian base position
 //@param longitudinalPosition - forward/backward position
