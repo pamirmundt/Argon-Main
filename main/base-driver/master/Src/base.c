@@ -136,6 +136,48 @@ void base_setControlMode(Base* myBase, uint8_t mode){
 	myBase->controlMode = mode;
 }
 
+void setPositionPID(Base* myBase, uint8_t mode, float Kp, float Ki, float Kd){
+	switch (mode){
+		case 0x00: {
+			myBase->KLp = Kp;
+			myBase->KLi = Ki;
+			myBase->KLd = Kd;
+		} break;
+		
+		case 0x01: {
+			myBase->KTp = Kp;
+			myBase->KTi = Ki;
+			myBase->KTd = Kd;
+		} break;
+		
+		case 0x02: {
+			myBase->KOp = Kp;
+			myBase->KOi = Ki;
+			myBase->KOd = Kd;
+		} break;
+	}
+}
+
+void setVelocityPID(Base* myBase, uint8_t motor, float Kp, float Ki, float Kd){
+	switch (motor){
+		case 0x00:{
+			motor_setPID(myBase->frontLeftWheel, Kp, Ki, Kd);
+		} break;
+				
+		case 0x01:{
+			motor_setPID(myBase->frontRightWheel, Kp, Ki, Kd);
+		} break;
+		
+		case 0x02:{
+			motor_setPID(myBase->rearLeftWheel, Kp, Ki, Kd);
+		} break;
+		
+		case 0x03:{
+			motor_setPID(myBase->rearRightWheel, Kp, Ki, Kd);
+		} break;
+	}
+}
+
 //Gets the cartesian base position
 //@param longitudinalPosition - forward/backward position
 //@param transversalPosition - sideway position

@@ -125,14 +125,6 @@ void slaveCmdParser(){
 			base_reset(&mecanumBase);		
 		} break;
 		
-		case CMD_BASE_START:{
-			
-		} break;
-		
-		case CMD_BASE_STOP:{
-			
-		} break;
-		
 		case CMD_SET_BASE_SPEED:{
 			float params[3] = {0};
 			memcpy(&params[0], &hi2c2RXBuffer[1], sizeof(float));		//Longitudinal Velocity
@@ -155,12 +147,36 @@ void slaveCmdParser(){
 		} break;
 		
 		//PID
-		case CMD_SET_VEL_PID_CONST:{
+		case CMD_SET_POS_PID_CONST:{
+			//1. Byte - 0: Longitudal PID, 1: Transversal PID, 2: Angular PID
+			//2. Byte - Proportional Constant
+			//6. Byte - Integral Constant
+			//10. Byte - Derivative Constant
 			
+			uint8_t mode[1] = {0};
+			float params[3] = {0};
+			memcpy(&mode[0], &hi2c2RXBuffer[1], sizeof(uint8_t));
+			memcpy(&params[0], &hi2c2RXBuffer[2], sizeof(float));
+			memcpy(&params[1], &hi2c2RXBuffer[6], sizeof(float));
+			memcpy(&params[2], &hi2c2RXBuffer[10], sizeof(float));
+			
+			setPositionPID(&mecanumBase, mode[0], params[0], params[1], params[2]);		
 		} break;
 		
-		case CMD_SET_POS_PID_CONST:{
+		case CMD_SET_VEL_PID_CONST:{
+			//1. Byte - 0: Front Left Motor, 1: Front Right Motor, 2: Rear Right Motor, 3: Rear Left Motor
+			//2. Byte - Proportional Constant
+			//6. Byte - Integral Constant
+			//10. Byte - Derivative Constant
 			
+			uint8_t motorNum;
+			float params[3] = {0};
+			memcpy(&motorNum, &hi2c2RXBuffer[1], sizeof(uint8_t));
+			memcpy(&params[0], &hi2c2RXBuffer[2], sizeof(float));
+			memcpy(&params[1], &hi2c2RXBuffer[6], sizeof(float));
+			memcpy(&params[2], &hi2c2RXBuffer[10], sizeof(float));
+			
+			setVelocityPID(&mecanumBase, motorNum, params[0], params[1], params[2]);	
 		} break;
 		
 		//****************************
@@ -248,10 +264,75 @@ void slaveCmdParser(){
 		} break;
 		
 		case CMD_GET_VEL_PID_CONST:{
+			float Kp, Ki, Kd;
+			uint8_t motorNum;
+			memcpy(&motorNum, &hi2c2RXBuffer[1], sizeof(uint8_t));
 			
+			switch (motorNum){
+				//Front Left Motor
+				case 0x00: {
+					motor_getPID(mecanumBase.frontLeftWheel, &Kp, &Ki, &Kd);
+				} break;
+				
+				//Front Right Motor
+				case 0x01: {
+					motor_getPID(mecanumBase.frontRightWheel, &Kp, &Ki, &Kd);
+				} break;
+				
+				//Rear Left Motor
+				case 0x02: {
+					motor_getPID(mecanumBase.rearLeftWheel, &Kp, &Ki, &Kd);
+				} break;
+				
+				//Rear Right Motor
+				case 0x03: {
+					motor_getPID(mecanumBase.rearRightWheel, &Kp, &Ki, &Kd);
+				} break;
+			}
+
+			memcpy(&hi2c2TXBuffer[0], &Kp, sizeof(float));
+			memcpy(&hi2c2TXBuffer[4], &Ki, sizeof(float));
+			memcpy(&hi2c2TXBuffer[8], &Kd, sizeof(float));
 		} break;
 		
 		case CMD_GET_POS_PID_CONST:{
+			//Mode:0 - Longitudal PID Constants
+			//Mode:1 - Transversal PID Constants
+			//Mode:2 - Angular PID Constants
+			uint8_t mode;
+			memcpy(&mode, &hi2c2RXBuffer[1], sizeof(mode));
+			
+			switch (mode){
+				case 0x00: {
+					float KLp = mecanumBase.KLp;
+					float KLi = mecanumBase.KLi;
+					float KLd = mecanumBase.KLd;
+					
+					memcpy(&hi2c2TXBuffer[0], &KLp, sizeof(float));
+					memcpy(&hi2c2TXBuffer[4], &KLi, sizeof(float));
+					memcpy(&hi2c2TXBuffer[8], &KLd, sizeof(float));
+				} break;
+				
+				case 0x01: {
+					float KTp = mecanumBase.KTp;
+					float KTi = mecanumBase.KTi;
+					float KTd = mecanumBase.KTd;
+					
+					memcpy(&hi2c2TXBuffer[0], &KTp, sizeof(float));
+					memcpy(&hi2c2TXBuffer[4], &KTi, sizeof(float));
+					memcpy(&hi2c2TXBuffer[8], &KTd, sizeof(float));
+				} break;
+				
+				case 0x02: {
+					float KOp = mecanumBase.KOp;
+					float KOi = mecanumBase.KOi;
+					float KOd = mecanumBase.KOd;
+					
+					memcpy(&hi2c2TXBuffer[0], &KOp, sizeof(float));
+					memcpy(&hi2c2TXBuffer[4], &KOi, sizeof(float));
+					memcpy(&hi2c2TXBuffer[8], &KOd, sizeof(float));
+				} break;
+			}
 			
 		} break;
 	}

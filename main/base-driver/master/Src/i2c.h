@@ -19,13 +19,14 @@
 #define CMD_SET_BASE_GOAL				0x0E  //Position mode (need trajectory)
 //Control Mode
 #define CMD_SET_CONT_MODE				0x10	//Manuel/Velocity/Position Mode
-//PID
+//PID Constants
 #define CMD_SET_VEL_PID_CONST		0x20
 #define CMD_SET_POS_PID_CONST		0x21
-#define CMD_GET_VEL_PID_CONST		0x22
-#define CMD_GET_POS_PID_CONST		0x23
 
 //Get Motor Configurations and Status
+//PID Constants
+#define CMD_GET_VEL_PID_CONST		0x22
+#define CMD_GET_POS_PID_CONST		0x23
 //Joint Commands
 #define CMD_GET_JOINT_PWM 					0x25
 #define CMD_GET_JOINT_POS						0x26	//Encoder count

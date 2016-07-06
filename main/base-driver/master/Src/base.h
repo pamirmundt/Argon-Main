@@ -109,6 +109,28 @@ void base_getGoal(void);	//Not yet implemented
 //@param control mode
 void base_setControlMode(Base* myBase, uint8_t mode);
 
+//Set Position PID Control Constants
+//Position control is taken careof by the master
+//@param pointer to mecanum base
+//@param 	mode:0 - Longitudal PID constant
+//				mode:1 - Tranversal PID constant
+//				mode:2 - Angular PID constant
+//@param Proportional constant
+//@param Integral constant
+//@param Derivative constant
+void setPositionPID(Base* myBase, uint8_t mode, float Kp, float Ki, float Kd);
+
+//***********************************************************************************
+//Set Ve1ocity PID Control Constants
+//Velocity control is take careof by each slave
+//@param pointer to mecanum base
+//@param 	motor:0 - front left motor
+//				motor:1 - front right motor
+//				motor:2 - rear left motor
+//				motor:3 - rear right motor
+void setVelocityPID(Base* myBase, uint8_t motor, float Kp, float Ki, float Kd);
+//***********************************************************************************
+
 //Gets the cartesian base position
 //@param longitudinalPosition - forward/backward position
 //@param transversalPosition - sideway position
