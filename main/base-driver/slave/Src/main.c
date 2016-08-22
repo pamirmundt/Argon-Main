@@ -177,33 +177,33 @@ int main(void)
 
   /* USER CODE BEGIN 2 */
 	
-	//Initialize Motor
-	//Enable Motor
-	motorInit();
+  //Initialize Motor
+  //Enable Motor
+  motorInit();
 	
-	//Encoder Init
-	//Timer2 - 64Mhz
-	//4X Encoding
-	HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
+  //Encoder Init
+  //Timer2 - 64Mhz
+  //4X Encoding
+  HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
 	
-	//Control Interrupt Init
-	//Timer3 - 64Mhz
-	//64Mhz/64000/5 = 200Hz
-	//HAL_TIM_Base_Start_IT(&htim3);
-	HAL_TIM_Base_Start_IT(&htim3);
+  //Control Interrupt Init
+  //Timer3 - 64Mhz
+  //64Mhz/16000/3 = 1000Hz
+  HAL_TIM_Base_Start_IT(&htim3);
 	
-	//PWM Init
-	//Timer16 - 64Mhz
-	//128Mhz/2048 = 31,250Hz
-	//12bit Resolution 0-2047
-	HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1);
+  //PWM Init
+  //Timer16 - 64Mhz
+  //128Mhz/2048 = 31,250Hz
+  //12bit Resolution 0-2047
+  HAL_TIM_PWM_Start(&htim16, TIM_CHANNEL_1);
 	
 	
-	//Enable STBY
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_SET);
-	m.Kp = Kp;
-	m.Ki = Ki;
-	m.Kd = Kd;
+  //Enable STBY
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_SET);
+  //Set Kp Ki Kd values
+  m.Kp = Kp;
+  m.Ki = Ki;
+  m.Kd = Kd;
 	
   /* USER CODE END 2 */
 
@@ -222,7 +222,6 @@ int main(void)
 			case WriteAddressed:
 				while(HAL_I2C_Slave_Receive_IT(&hi2c1, (uint8_t*)rxBuffer, RXBUFFERSIZE) != HAL_OK);
 				while(HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY);
-				cmdParser();
 				break;
 		}
 		
@@ -277,7 +276,7 @@ void MX_I2C1_Init(void)
 {
 
   hi2c1.Instance = I2C1;
-  hi2c1.Init.Timing = 0x00300B29;
+  hi2c1.Init.Timing = 0x10C0117E;
   hi2c1.Init.OwnAddress1 = I2C_ADDRESS;
   hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -290,10 +289,6 @@ void MX_I2C1_Init(void)
     /**Configure Analogue filter 
     */
   HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE);
-
-    /**I2C Fast mode Plus enable 
-    */
-  __HAL_SYSCFG_FASTMODEPLUS_ENABLE(I2C_FASTMODEPLUS_I2C1);
 
 }
 
@@ -436,6 +431,24 @@ void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
+//I2C Receive Callback function for I2C Message parsing
+void HAL_I2C_SlaveRxCpltCallback(I2C_HandleTypeDef *I2cHandle){
+  //I2C Message Parser
+  cmdParser();
+}
+
+//I2C Erro Callback function
+void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *I2cHandle){
+	//if I2C Transaction process is interrupt ARLO (arbitrary lost) is set
+	//Restart I2C Bus
+	/*
+	if (__HAL_I2C_GET_FLAG(&hi2c1, I2C_FLAG_ARLO) == 1){
+		__HAL_I2C_CLEAR_FLAG(&hi2c1, I2C_FLAG_ARLO);
+		MX_I2C1_Init();
+	}
+	*/
+}
+
 /**
   * @brief  Timer 3 Interrupt at 1kHz. Calculate RPM, calculate PID and drive motor
   * @param  htim pointer
@@ -493,8 +506,8 @@ void motorInit(){
 void calcRPM(){
 	m.encPos = __HAL_TIM_GET_COUNTER(&htim2);		//Get Count
 	m.dPos = m.encPos - m.encPrevPos; 					//Delta position (difference)
-  m.encPrevPos = m.encPos;
-  m.RPM = (((60.0f)/(contPeriod*encoderRes))*((float)m.dPos))/4.0f;
+	m.encPrevPos = m.encPos;
+	m.RPM = (((60.0f)/(contPeriod*encoderRes))*((float)m.dPos))/4.0f;
 }
 
 /**
@@ -504,11 +517,11 @@ void calcRPM(){
   */
 void calcPID(){
 	m.errRPM = m.refRPM*gearRatio - m.RPM;
-  m.integral = m.integral + m.errRPM*contPeriod;
+	m.integral = m.integral + m.errRPM*contPeriod;
 	//Velocity Control -> PI Control
-  //m.derivative = (m.errRPM - m.errPrevRPM)/contPeriod;
-  m.control = m.Kp*m.errRPM + m.Ki*m.integral;//+ Kd*m.derivative;
-  m.errPrevRPM = m.errRPM;
+	//m.derivative = (m.errRPM - m.errPrevRPM)/contPeriod;
+	m.control = m.Kp*m.errRPM + m.Ki*m.integral;//+ Kd*m.derivative;
+	m.errPrevRPM = m.errRPM;
 }
 
 /**
@@ -559,16 +572,16 @@ void setMotorPWM(){
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_3, GPIO_PIN_SET);			//A2 - AIN1
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);			//A3 - AIN2
   }
-  if(m.PWM > 0){
+	if(m.PWM > 0){
 		//CW Rotation: HIGH - LOW
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_3, GPIO_PIN_SET);			//A2 - AIN1
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);		//A3 - AIN2
-  } else {
+	} else {
     //CCW Rotation: LOW - HIGH
-    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_3, GPIO_PIN_RESET);		//A2 - AIN1
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_3, GPIO_PIN_RESET);		//A2 - AIN1
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);			//A3 - AIN2
-  }
-  __HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, fabsf(m.PWM));
+	}
+	__HAL_TIM_SET_COMPARE(&htim16, TIM_CHANNEL_1, fabsf(m.PWM));
 }
 
 /* USER CODE END 4 */

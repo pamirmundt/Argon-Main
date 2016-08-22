@@ -41,7 +41,7 @@ extern void motorInit(void);
 
 void cmdParser(){
 	//Clean TX Buffer before writing new messages
-	memset(&txBuffer, 0, sizeof(TXBUFFERSIZE));
+	//memset(&txBuffer, 0, sizeof(TXBUFFERSIZE));
 
 	//Get Command(CMD)
 	uint8_t cmd[1];
@@ -155,5 +155,5 @@ void cmdParser(){
 	}
 	
 	//Clean RX Buffer before writing new messages
-	memset(&rxBuffer, 0, sizeof(RXBUFFERSIZE));
+	//memset(&rxBuffer, 0, sizeof(RXBUFFERSIZE));
 }
