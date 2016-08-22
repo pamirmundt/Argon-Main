@@ -1,36 +1,39 @@
 //*****************************
-//* Motor I2C Communication
+// Motor RPi I2C Communication
 //*****************************
 
 #ifndef MOTOR_H
 #define MOTOR_H
 
-#include "stm32f4xx_hal.h"
 #include <stdint.h>
-#include <string.h>
-#include "i2c.h"
+#include "RPi-i2c.h"
 
-/*
-//Set Motor Configuration and Function Commands
-#define CMD_RESET 				0x02
-#define CMD_SET_SPEED			0x03	//Velocity control mode Only
-#define CMD_SET_PID_CONST	0x04
-#define CMD_SET_POWER			0x05	//Manuel mode only
-#define CMD_SET_PWM				0x06	//Manuel mode only
-#define CMD_SET_MODE			0x07
+//Set Base Configuration and Function Commands
+//Joint Commands
+#define CMD_RESET_JOINT 				0x02
+#define CMD_SET_JOINT_PWM				0x03	//Manuel mode
+#define CMD_SET_JOINT_SPEED				0x04	//Velocity mode
+#define CMD_SET_JOINT_POWER				0x05	//Manuel mode
+
+//Control Mode
+#define CMD_SET_CONT_MODE				0x10	//Manuel/Velocity
+
+//PID
+#define CMD_SET_VEL_PID_CONST			0x20
+#define CMD_GET_VEL_PID_CONST			0x22
 
 //Get Motor Configurations and Status
-#define CMD_GET_PID 			0x10
-#define CMD_GET_POWER 		0x11
-#define CMD_GET_POS 			0x12
-#define CMD_GET_SPEED 		0x13
-#define CMD_GET_PWM 			0x14
-#define CMD_GET_REF_SPEED 0x15
-*/
+//Joint Commands
+#define CMD_GET_JOINT_PWM 				0x25
+#define CMD_GET_JOINT_POS				0x26	//Encoder count
+#define CMD_GET_JOINT_SPEED				0x27	//RPM
+#define CMD_GET_JOINT_POWER				0x28	//0-100%
+#define CMD_GET_JOINT_REF_SPEED			0x29
+
 
 typedef struct{
 	uint16_t slaveAddr;
-	int32_t lastEncPos;
+	//int32_t lastEncPos;
 }Motor;
 
 

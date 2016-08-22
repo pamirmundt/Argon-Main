@@ -1,11 +1,11 @@
 #ifndef BASE_H
 #define BASE_H
 
-#include "BaseKinematics.h"
+#include <Python.h>
+#include "baseKinematics.h"
 #include "motor.h"
 
-extern const float gearRatio;
-extern TIM_HandleTypeDef htim9;
+//extern const float gearRatio;
 
 //PID Constants
 //Longitude position control constants
@@ -66,10 +66,9 @@ typedef struct{
 	volatile float errOrien;
 	volatile float errPrevOrien;
 
-	volatile int32_t lastEncoderPositions[4];
+	int32_t lastEncoderPositions[4];
 	volatile float wheelTorques[4];
 }Base;
-
 
 //Initialize mecanum base, needs to called before everything
 //	- Attacts wheel to the base
@@ -129,7 +128,7 @@ void setVelocityPID(Base* myBase, uint8_t motor, float Kp, float Ki, float Kd);
 //@param longitudinalPosition - forward/backward position
 //@param transversalPosition - sideway position
 //@param orientation - orientation
-void base_getUpdatePosition(Base* base, float* longitudinalPosition, float* transversalPosition, float* orientation);
+void base_getUpdatePosition(PyObject *pArgs_wheelPositionsToCartesianPosition, PyObject *pKinematicsValue, PyObject *pFunc_wheelPositionsToCartesianPosition, Base* base, float* longitudinalPosition, float* transversalPosition, float* orientation);
 
 //Gets the cartesian base velocity
 //@param longitudinalVelocity - forward/backward velocity
@@ -147,6 +146,6 @@ void base_setVelocity(Base base, float longitudinalVelocity, float transversalVe
 //Calculates wheel torques from base force with Jacobian Transpose
 //@param base
 //@param returns wheel torques
-void base_calcWheelTorques(Base* base, volatile float wheelTorques[]);
+void base_calcWheelTorques(PyObject *pArgs_calcJacobianT, PyObject *pKinematicsValue, PyObject *pFunc_calcJacobianT, Base* base);
 
 #endif
