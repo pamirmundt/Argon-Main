@@ -1,28 +1,48 @@
 import math
 
-encChannelRes = 4.0   						#4x Encoding - Channal A/B
-encoderRes = 334.0							#Encoder Resolution 334 pulse/rotation
-wheelRadius = 0.03   						#meter - r:30mm
-gearRatio = 13.552							#1:13.552 Ratio
-lengthBetweenFrontAndRearWheels = 0.2289 	#meter - a:228.9mm
-lengthBetweenFrontWheels = 0.214  			#meter - b:214mm
-geom_factor = (lengthBetweenFrontAndRearWheels + lengthBetweenFrontWheels / 2.0)
+encChannelRes = float(4.0)   						#4x Encoding - Channal A/B
+encoderRes = float(334.0)							#Encoder Resolution 334 pulse/rotation
+wheelRadius = float(0.03)   						#meter - r:30mm
+gearRatio = float(13.552)							#1:13.552 Ratio
+lengthBetweenFrontAndRearWheels = float(0.2289) 	#meter - a:228.9mm
+lengthBetweenFrontWheels = float(0.214)  			#meter - b:214mm
+geom_factor = float(lengthBetweenFrontAndRearWheels + lengthBetweenFrontWheels / 2.0)
 
 
-def cartesianVelocityToWheelVelocities(a,b):
-    print "Will compute", a, "times", b
-    c = 0
-    for i in range(0, a):
-        c = c + b
-    return c
+
+def cartesianVelocityToWheelVelocities(longitudinalVelocity, transversalVelocity, angularVelocity):
+	#Base Velocity to wheel velocities
+	W0_angVel = float(longitudinalVelocity + transversalVelocity + geom_factor * angularVelocity)
+	W1_angVel = float(longitudinalVelocity - transversalVelocity - geom_factor * angularVelocity)
+	W2_angVel = float(longitudinalVelocity - transversalVelocity + geom_factor * angularVelocity)
+	W3_angVel = float(longitudinalVelocity + transversalVelocity - geom_factor * angularVelocity)
+
+	#Angular velocity to RPM
+	W0_RPM = float(W0_angVel * 60.0 / (2.0 * math.pi * wheelRadius))
+	W1_RPM = float(W1_angVel * 60.0 / (2.0 * math.pi * wheelRadius))
+	W2_RPM = float(W2_angVel * 60.0 / (2.0 * math.pi * wheelRadius))
+	W3_RPM = float(W3_angVel * 60.0 / (2.0 * math.pi * wheelRadius))
 
 
-def wheelVelocitiesToCartesianVelocity(a,b):
-    print "Will compute", a, "times", b
-    c = 0
-    for i in range(0, a):
-        c = c + b
-    return c
+	#Create Return (Tuple) Object
+	pyReturnArgs = (W0_RPM, W1_RPM, W2_RPM,W3_RPM)
+	return pyReturnArgs
+
+
+def wheelVelocitiesToCartesianVelocity(W0_RPM, W1_RPM, W2_RPM, W3_RPM):	
+	#RPM to rad/s
+	W0_angVel = float((W0_RPM / gearRatio) * 2.0 * math.pi / 60.0)
+	W1_angVel = float((W1_RPM / gearRatio) * 2.0 * math.pi / 60.0)
+	W2_angVel = float((W2_RPM / gearRatio) * 2.0 * math.pi / 60.0)
+	W3_angVel = float((W3_RPM / gearRatio) * 2.0 * math.pi / 60.0)
+
+	longitudinalVelocity = float((W0_angVel + W1_angVel + W2_angVel + W3_angVel) * wheelRadius / 4.0)
+	transversalVelocity = float((W0_angVel - W1_angVel - W2_angVel + W3_angVel) * wheelRadius / 4.0)
+	angularVelocity = float((W0_angVel - W1_angVel + W2_angVel - W3_angVel) * wheelRadius / (4.0 * geom_factor))
+
+	#Create Return (Tuple) Object
+	pyReturnArgs = (longitudinalVelocity, transversalVelocity, angularVelocity)
+	return pyReturnArgs
 
 
 def wheelPositionsToCartesianPosition(encPos0, encPos1, encPos2, encPos3, lastEncPos0, lastEncPos1, lastEncPos2, lastEncPos3, longitudinalPosition, transversalPosition, orientation):
@@ -55,7 +75,7 @@ def wheelPositionsToCartesianPosition(encPos0, encPos1, encPos2, encPos3, lastEn
 
 
 
-	#Create Tuple Object
+	#Create Return (Tuple) Object
 	pyReturnArgs = (lastEncPos0, lastEncPos1, lastEncPos2, lastEncPos3, longitudinalPosition, transversalPosition, orientation)
 	return pyReturnArgs
 
@@ -69,6 +89,6 @@ def calcJacobianT(baseLongitudinalForce, baseTransversalForce, baseOrientationFo
 
 
 
-	#Create Tuple Object
+	#Create Return (Tuple) Object
 	pyReturnArgs = (W0Torque, W1Torque, W2Torque, W3Torque)
 	return pyReturnArgs

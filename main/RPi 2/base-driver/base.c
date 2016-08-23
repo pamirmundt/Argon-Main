@@ -23,22 +23,6 @@ void base_init(Base* myBase, Motor* FLwheel, Motor* FRwheel, Motor* RLwheel, Mot
 	motor_reset(myBase->frontRightWheel);
 	motor_reset(myBase->rearLeftWheel);
 	motor_reset(myBase->rearRightWheel);
-	
-	//Set PID constants
-	//Longitudinal PID Constants
-	myBase->KLp = KLp;
-	myBase->KLi = KLi;
-	myBase->KLd = KLd;
-	
-	//Transversal PID Constants
-	myBase->KTp = KTp;
-	myBase->KTi = KTi;
-	myBase->KTd = KTd;
-	
-	//Orientation PID Constants
-	myBase->KOp = KOp;
-	myBase->KOi = KOi;
-	myBase->KOd = KOd;
 
 	//Default Mode: Velocity Control
 	myBase->controlMode = 0x01;
@@ -176,7 +160,7 @@ void setVelocityPID(Base* myBase, uint8_t motor, float Kp, float Ki, float Kd){
 //@param longitudinalPosition - forward/backward position
 //@param transversalPosition - sideway position
 //@param orientation - orientation
-void base_getUpdatePosition(PyObject *pArgs_wheelPositionsToCartesianPosition, PyObject *pKinematicsValue, PyObject *pFunc_wheelPositionsToCartesianPosition, Base* base, float* longitudinalPosition, float* transversalPosition, float* orientation){
+void base_getUpdatePosition(PyObject *pArgs_wheelPositionsToCartesianPosition, PyObject *pKinematicsValue, PyObject *pFunc_wheelPositionsToCartesianPosition, Base* base){
 	int32_t encoderPositions[4] = {0};
 	encoderPositions[0] = motor_getPos(base->frontLeftWheel);
 	encoderPositions[1] = motor_getPos(base->frontRightWheel);
@@ -204,11 +188,11 @@ void base_getUpdatePosition(PyObject *pArgs_wheelPositionsToCartesianPosition, P
 	pKinematicsValue = PyLong_FromLong(base->lastEncoderPositions[3]);
 	PyTuple_SetItem(pArgs_wheelPositionsToCartesianPosition, 7, pKinematicsValue);
 	//Mecanum Base Positions
-	pKinematicsValue = PyFloat_FromDouble(*longitudinalPosition);
+	pKinematicsValue = PyFloat_FromDouble(base->longitudinalPosition);
     PyTuple_SetItem(pArgs_wheelPositionsToCartesianPosition, 8, pKinematicsValue);
-    pKinematicsValue = PyFloat_FromDouble(*transversalPosition);
+    pKinematicsValue = PyFloat_FromDouble(base->transversalPosition);
     PyTuple_SetItem(pArgs_wheelPositionsToCartesianPosition, 9, pKinematicsValue);
-    pKinematicsValue = PyFloat_FromDouble(*orientation);
+    pKinematicsValue = PyFloat_FromDouble(base->orientation);
     PyTuple_SetItem(pArgs_wheelPositionsToCartesianPosition, 10, pKinematicsValue);
 
     //Execute pyhton function "wheelPositionsToCartesianPosition"
@@ -232,27 +216,47 @@ void base_getUpdatePosition(PyObject *pArgs_wheelPositionsToCartesianPosition, P
 //@param longitudinalVelocity - forward/backward velocity
 //@param transversalVelocity - sideway velocity
 //@param angularVelocity - rotational velocity
-void base_getVelocity(Base base, float* longitudinalVelocity, float* transversalVelocity, float* angularVelocity){
-	float RPM0 = motor_getSpeed(base.frontLeftWheel) / gearRatio;
-	float RPM1 = motor_getSpeed(base.frontRightWheel) / gearRatio;
-	float RPM2 = motor_getSpeed(base.rearLeftWheel) / gearRatio;
-  	float RPM3 = motor_getSpeed(base.rearRightWheel) /gearRatio;
+void base_getVelocity(PyObject *pArgs_wheelVelocitiesToCartesianVelocity, PyObject *pKinematicsValue, PyObject *pFunc_wheelVelocitiesToCartesianVelocity, Base* base){
+	float RPM0 = motor_getSpeed(base->frontLeftWheel);
+	float RPM1 = motor_getSpeed(base->frontRightWheel);
+	float RPM2 = motor_getSpeed(base->rearLeftWheel);
+  	float RPM3 = motor_getSpeed(base->rearRightWheel);
+
+  	pKinematicsValue = PyFloat_FromDouble(RPM0);
+	PyTuple_SetItem(pArgs_wheelVelocitiesToCartesianVelocity, 0, pKinematicsValue);
+	pKinematicsValue = PyFloat_FromDouble(RPM1);
+	PyTuple_SetItem(pArgs_wheelVelocitiesToCartesianVelocity, 1, pKinematicsValue);
+	pKinematicsValue = PyFloat_FromDouble(RPM2);
+	PyTuple_SetItem(pArgs_wheelVelocitiesToCartesianVelocity, 2, pKinematicsValue);
+	pKinematicsValue = PyFloat_FromDouble(RPM3);
+	PyTuple_SetItem(pArgs_wheelVelocitiesToCartesianVelocity, 3, pKinematicsValue);
 	
-  	wheelVelocitiesToCartesianVelocity(RPM0, RPM1, RPM2, RPM3, longitudinalVelocity, transversalVelocity, angularVelocity);
+	pKinematicsValue = PyObject_CallObject(pFunc_wheelVelocitiesToCartesianVelocity, pArgs_wheelVelocitiesToCartesianVelocity);
+
+	base->longitudinalVelocity = PyFloat_AsDouble(PyTuple_GetItem(pKinematicsValue, 0));
+	base->transversalVelocity = PyFloat_AsDouble(PyTuple_GetItem(pKinematicsValue, 0));
+	base->angularVelocity = PyFloat_AsDouble(PyTuple_GetItem(pKinematicsValue, 0));
 }
 
 //Sets the cartesian base velocity
 //@param longitudinalVelocity - forward/backward velocity
 //@param transversalVelocity - sideway velocity
 //@param angularVelocity - rotational velocity
-void base_setVelocity(Base base, float longitudinalVelocity, float transversalVelocity, float angularVelocity){
-	float W0_RPM, W1_RPM, W2_RPM, W3_RPM;
-  	cartesianVelocityToWheelVelocities(longitudinalVelocity, transversalVelocity, angularVelocity, &W0_RPM, &W1_RPM, &W2_RPM, &W3_RPM);
-  
-	motor_setRPM(base.frontLeftWheel, W0_RPM);
-	motor_setRPM(base.frontRightWheel, W1_RPM);
-	motor_setRPM(base.rearLeftWheel, W2_RPM);
-	motor_setRPM(base.rearRightWheel, W3_RPM);
+void base_setVelocity(PyObject *pArgs_cartesianVelocityToWheelVelocities, PyObject *pKinematicsValue, PyObject *pFunc_cartesianVelocityToWheelVelocities, Base base, float longitudinalVelocity, float transversalVelocity, float angularVelocity){
+	pKinematicsValue = PyFloat_FromDouble(longitudinalVelocity);
+	PyTuple_SetItem(pArgs_cartesianVelocityToWheelVelocities, 0, pKinematicsValue);
+	pKinematicsValue = PyFloat_FromDouble(transversalVelocity);
+	PyTuple_SetItem(pArgs_cartesianVelocityToWheelVelocities, 1, pKinematicsValue);
+	pKinematicsValue = PyFloat_FromDouble(angularVelocity);
+	PyTuple_SetItem(pArgs_cartesianVelocityToWheelVelocities, 2, pKinematicsValue);
+
+
+	pKinematicsValue = PyObject_CallObject(pFunc_cartesianVelocityToWheelVelocities, pArgs_cartesianVelocityToWheelVelocities);
+
+	motor_setRPM(base.frontLeftWheel, PyFloat_AsDouble(PyTuple_GetItem(pKinematicsValue, 0)));
+	motor_setRPM(base.frontRightWheel, PyFloat_AsDouble(PyTuple_GetItem(pKinematicsValue, 1)));
+	motor_setRPM(base.rearLeftWheel, PyFloat_AsDouble(PyTuple_GetItem(pKinematicsValue, 2)));
+	motor_setRPM(base.rearRightWheel, PyFloat_AsDouble(PyTuple_GetItem(pKinematicsValue, 3)));
 }
 
 //calculate wheel torques
@@ -277,6 +281,4 @@ void base_calcWheelTorques(PyObject *pArgs_calcJacobianT, PyObject *pKinematicsV
 	base->wheelTorques[1] = PyFloat_AsDouble(PyTuple_GetItem(pKinematicsValue, 1));
 	base->wheelTorques[2] = PyFloat_AsDouble(PyTuple_GetItem(pKinematicsValue, 2));
 	base->wheelTorques[3] = PyFloat_AsDouble(PyTuple_GetItem(pKinematicsValue, 3));
-
-	//calcJacobianT(&base->controlLong, &base->controlTrans, &base->controlOrien, wheelTorques);
 }

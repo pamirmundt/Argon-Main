@@ -34,19 +34,12 @@
 #include <sys/stat.h>
 
 
-
+//Ctrl+C signal catch for safe exit
 volatile sig_atomic_t ctrlLoop = 1;
 
+//Motor-Base Struct
 Motor motorFL, motorFR, motorRL, motorRR;
 Base mecanumBase;
-
-//Base Position PID Constants
-//Longitude position control constants
-const float KLp = 13.5f, KLi = 0.0f, KLd = 0.01f; 
-//Transversal position control constants
-const float KTp = 13.5f, KTi = 0.0f, KTd = 0.01f;
-//Angular(orientation) position control constants
-const float KOp = 0.3f, KOi = 0.0f, KOd = 0.0001f;
 
 //Torque to velocity constant
 const float Ktv = 100000.0f;
@@ -148,7 +141,7 @@ int main(){
     funcNameCalcPID = "calcBasePositionPID";
 
     //Number of arguments to pass
-    int calcPIDnumOfArgs = 19;
+    int calcPIDnumOfArgs = 10;
 
     Py_Initialize();
 
@@ -186,8 +179,8 @@ int main(){
     PyObject *pKinematicsValue;
 
     //Argument number
-    int argsNum_cartesianVelocityToWheelVelocities = 1;
-    int argsNum_wheelVelocitiesToCartesianVelocity = 1;
+    int argsNum_cartesianVelocityToWheelVelocities = 3;
+    int argsNum_wheelVelocitiesToCartesianVelocity = 4;
     int argsNum_wheelPositionsToCartesianPosition = 11;
     int argsNum_calcJacobianT = 3;
 
@@ -218,21 +211,16 @@ int main(){
     }
 
     //Create Pyhton Tuples
+    pArgs_cartesianVelocityToWheelVelocities = PyTuple_New(argsNum_cartesianVelocityToWheelVelocities);
+    pArgs_wheelVelocitiesToCartesianVelocity = PyTuple_New(argsNum_wheelVelocitiesToCartesianVelocity);
     pArgs_wheelPositionsToCartesianPosition = PyTuple_New(argsNum_wheelPositionsToCartesianPosition);
     pArgs_calcJacobianT = PyTuple_New(argsNum_calcJacobianT);
 
     //********************************************************************************
 
 
-    base_setVelocity(mecanumBase, 0.1f, 0.0f, 0.0f);
-    //motor_setPWM(m.motorFL, 500);
-    //motor_setPWM(mecanumBase.frontLeftWheel, 500);
-    //motor_setPWM(mecanumBase.frontRightWheel, 500);
-    //motor_setPWM(mecanumBase.rearLeftWheel, 500);
-    //motor_setPWM(mecanumBase.rearRightWheel, 500);
-    //float longSp, transSp, angSp;
-    //int32_t pos0 = 0, pos1 = 0, pos2 = 0, pos3 = 0, lastPos0 = 0, lastPos1 = 0, lastPos2 = 0, lastPos3 = 0;
-
+    //DEBUG
+    base_setVelocity(pArgs_cartesianVelocityToWheelVelocities, pKinematicsValue, pFunc_cartesianVelocityToWheelVelocities, mecanumBase, 0.1f, 0.0f, 0.0f);
 
 	while(ctrlLoop){
                 sleep_until(&ts,delay);
@@ -244,7 +232,7 @@ int main(){
                 */
             
                 //Update Position
-                base_getUpdatePosition(pArgs_wheelPositionsToCartesianPosition, pKinematicsValue, pFunc_wheelPositionsToCartesianPosition, &mecanumBase, &mecanumBase.longitudinalPosition, &mecanumBase.transversalPosition, &mecanumBase.orientation);
+                base_getUpdatePosition(pArgs_wheelPositionsToCartesianPosition, pKinematicsValue, pFunc_wheelPositionsToCartesianPosition, &mecanumBase);
 
 
                 //********************************************************************************
@@ -265,20 +253,11 @@ int main(){
 
 
                 //DEBUG
-                //base_getVelocity(mecanumBase, &longSp, &transSp, &angSp);
-                //pos0 = motor_getPos(mecanumBase.frontLeftWheel);
-                //pos1 = motor_getPos(mecanumBase.frontRightWheel);
-                //pos2 = motor_getPos(mecanumBase.rearRightWheel);
-                //pos3 = motor_getPos(mecanumBase.rearLeftWheel);
-                //printf("%d %d %d %d\n", (pos0 - lastPos0), (pos1 - lastPos1), (pos2 - lastPos2), (pos3 - lastPos3));
-                //printf("%d %d %d %d\n", pos0, pos1, pos2, pos3);
-                //lastPos0 = pos0;
-                //lastPos1 = pos1;
-                //lastPos2 = pos2;
-                //lastPos3 = pos3;
+                //base_getVelocity(pArgs_wheelVelocitiesToCartesianVelocity, pKinematicsValue, pFunc_wheelVelocitiesToCartesianVelocity, &mecanumBase);
                 
 
                 printf("%.10f %.10f %.10f\n", mecanumBase.longitudinalPosition, mecanumBase.transversalPosition, mecanumBase.orientation);
+                //printf("%.10f %.10f %.10f\n", mecanumBase.longitudinalVelocity, mecanumBase.transversalVelocity, mecanumBase.angularVelocity);
                 
                 setiopin(pin4,1);
                 setiopin(pin4,0);
@@ -293,6 +272,7 @@ int main(){
 	//********************************************************************************
 	printf("\nSafe Exit\n");
 	//Stop Motors
+    base_setControlMode(&mecanumBase, 0x01);
 	motor_setRPM(motorFL, 0);
     motor_setRPM(motorFR, 0);
     motor_setRPM(motorRL, 0);
@@ -356,65 +336,35 @@ void pyCalcPID(PyObject *pArgs, PyObject *pValue, PyObject *pFunc){
     pValue = PyFloat_FromDouble(contPeriod);
     PyTuple_SetItem(pArgs, 0, pValue);
 
-    //Long Kp, Ki, Kd
-    pValue = PyFloat_FromDouble(mecanumBase.KLp);
-    PyTuple_SetItem(pArgs, 1, pValue);
-
-    pValue = PyFloat_FromDouble(mecanumBase.KLi);
-    PyTuple_SetItem(pArgs, 2, pValue);
-
-    pValue = PyFloat_FromDouble(mecanumBase.KLd);
-    PyTuple_SetItem(pArgs, 3, pValue);
-
-    //Trans Kp, Ki, Kd
-    pValue = PyFloat_FromDouble(mecanumBase.KTp);
-    PyTuple_SetItem(pArgs, 4, pValue);
-
-    pValue = PyFloat_FromDouble(mecanumBase.KTi);
-    PyTuple_SetItem(pArgs, 5, pValue);
-
-    pValue = PyFloat_FromDouble(mecanumBase.KTd);
-    PyTuple_SetItem(pArgs, 6, pValue);
-
-    //Orien Kp, Ki, Kd
-    pValue = PyFloat_FromDouble(mecanumBase.KOp);
-    PyTuple_SetItem(pArgs, 7, pValue);
-
-    pValue = PyFloat_FromDouble(mecanumBase.KOi);
-    PyTuple_SetItem(pArgs, 8, pValue);
-
-    pValue = PyFloat_FromDouble(mecanumBase.KOd);
-    PyTuple_SetItem(pArgs, 9, pValue);
-
     //Ref Positions
     pValue = PyFloat_FromDouble(mecanumBase.refLongitudinalPosition);
-    PyTuple_SetItem(pArgs, 10, pValue);
+    PyTuple_SetItem(pArgs, 1, pValue);
 
     pValue = PyFloat_FromDouble(mecanumBase.refTransversalPosition);
-    PyTuple_SetItem(pArgs, 11, pValue);
+    PyTuple_SetItem(pArgs, 2, pValue);
 
     pValue = PyFloat_FromDouble(mecanumBase.refOrientation);
-    PyTuple_SetItem(pArgs, 12, pValue);
+    PyTuple_SetItem(pArgs, 3, pValue);
 
     //Base Positions
     pValue = PyFloat_FromDouble(mecanumBase.longitudinalPosition);
-    PyTuple_SetItem(pArgs, 13, pValue);
+    PyTuple_SetItem(pArgs, 4, pValue);
 
     pValue = PyFloat_FromDouble(mecanumBase.transversalPosition);
-    PyTuple_SetItem(pArgs, 14, pValue);
+    PyTuple_SetItem(pArgs, 5, pValue);
 
     pValue = PyFloat_FromDouble(mecanumBase.orientation);
-    PyTuple_SetItem(pArgs, 15, pValue);
+    PyTuple_SetItem(pArgs, 6, pValue);
 
     //Prev Error for positions
     pValue = PyFloat_FromDouble(mecanumBase.errPrevLong);
-    PyTuple_SetItem(pArgs, 16, pValue);
+    PyTuple_SetItem(pArgs, 7, pValue);
 
     pValue = PyFloat_FromDouble(mecanumBase.errPrevTrans);
-    PyTuple_SetItem(pArgs, 17, pValue);
+    PyTuple_SetItem(pArgs, 8, pValue);
 
     pValue = PyFloat_FromDouble(mecanumBase.errPrevOrien);
-    PyTuple_SetItem(pArgs, 18, pValue);
+    PyTuple_SetItem(pArgs, 9, pValue);
     
 
     //Execute pyhton function

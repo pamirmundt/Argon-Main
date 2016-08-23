@@ -1,3 +1,6 @@
+//NOT USED ANYMORE
+//C FUNCTIONS ARE NOW PYHTON FUNCTIONS
+
 #include "baseKinematics.h"
 #include <math.h>
 

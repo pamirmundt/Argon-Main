@@ -2,18 +2,8 @@
 #define BASE_H
 
 #include <Python.h>
-#include "baseKinematics.h"
 #include "motor.h"
 
-//extern const float gearRatio;
-
-//PID Constants
-//Longitude position control constants
-extern const float KLp, KLi, KLd; 
-//Transversal position control constants
-extern const float KTp, KTi, KTd;
-//Angular(orientation) position control constants
-extern const float KOp, KOi, KOd;
 
 typedef struct{
 	//Base control mode
@@ -31,6 +21,10 @@ typedef struct{
 	float longitudinalPosition;
 	float transversalPosition;
 	float orientation;
+
+	float longitudinalVelocity;
+	float transversalVelocity;
+	float angularVelocity;
 	
 	//PID
 	//Longitudinal PID 
@@ -128,19 +122,19 @@ void setVelocityPID(Base* myBase, uint8_t motor, float Kp, float Ki, float Kd);
 //@param longitudinalPosition - forward/backward position
 //@param transversalPosition - sideway position
 //@param orientation - orientation
-void base_getUpdatePosition(PyObject *pArgs_wheelPositionsToCartesianPosition, PyObject *pKinematicsValue, PyObject *pFunc_wheelPositionsToCartesianPosition, Base* base, float* longitudinalPosition, float* transversalPosition, float* orientation);
+void base_getUpdatePosition(PyObject *pArgs_wheelPositionsToCartesianPosition, PyObject *pKinematicsValue, PyObject *pFunc_wheelPositionsToCartesianPosition, Base* base);
 
 //Gets the cartesian base velocity
 //@param longitudinalVelocity - forward/backward velocity
 //@param transversalVelocity - sideway velocity
 //@param angularVelocity - rotational velocity
-void base_getVelocity(Base base, float* longitudinalVelocity, float* transversalVelocity, float* angularVelocity);
+void base_getVelocity(PyObject *pArgs_wheelVelocitiesToCartesianVelocity, PyObject *pKinematicsValue, PyObject *pFunc_wheelVelocitiesToCartesianVelocity, Base* base);
 
 //Sets the cartesian base velocity
 //@param longitudinalVelocity - forward/backward velocity
 //@param transversalVelocity - sideway velocity
 //@param angularVelocity - rotational velocity
-void base_setVelocity(Base base, float longitudinalVelocity, float transversalVelocity, float angularVelocity);
+void base_setVelocity(PyObject *pArgs_cartesianVelocityToWheelVelocities, PyObject *pKinematicsValue, PyObject *pFunc_cartesianVelocityToWheelVelocities, Base base, float longitudinalVelocity, float transversalVelocity, float angularVelocity);
 
 //calculate wheel torques
 //Calculates wheel torques from base force with Jacobian Transpose
