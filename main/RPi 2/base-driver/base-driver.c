@@ -8,6 +8,7 @@
 //sudo cat /sys/module/i2c_bcm2708/parameters/baudrate
 
 //RPI-2 Pullups: 1.8kOhm
+//STM Pullups: 430 Ohm
 
 #include <time.h>
 #include <sys/mman.h>   //Memory Lock
@@ -30,7 +31,6 @@
 #include <stdint.h>
 #include <semaphore.h>
 
-#include <fcntl.h>
 #include <sys/stat.h>
 
 
@@ -57,6 +57,49 @@ FILE *init_gpio(int gpioport);
 static void panic(char *message);
 void setiopin(FILE *fp, int val);
 
+//FIFO Variables
+int fd;
+char * myfifo = "/tmp/myfifo";
+
+void* perform_work(void* argument) {
+	//DEBUG
+    int passed_in_value;
+    passed_in_value = *((int *) argument);
+
+    //********************************************************************************
+    //  Setup FIFO for user application
+    //********************************************************************************
+    /* create the FIFO (named pipe) */
+    //Pipe has be open from both sides
+    if(mkfifo(myfifo, 0666))
+        printf("Failed to create FIFO special file: %s \n", strerror(errno));
+
+    /* open, read, and display the message from the FIFO */
+    //O_NONBLOCK
+    //O_RDWR
+    if((fd = open(myfifo, O_RDWR)) < 0)
+        printf("Failed to open FIFO special file: %s \n", strerror(errno));
+    //********************************************************************************
+
+
+    while(ctrlLoop){
+        printf("Hello World! It's me, thread with argument %d!\n", passed_in_value);
+        char msg[10];
+        float test = 0;
+        if(read(fd, &msg, sizeof(msg)) > 0){
+        	memcpy(&test, &msg[0], sizeof(test));
+       		printf("Received: %f \n", test);
+        }
+        usleep(100000);
+    }
+ 
+   /* optionally: insert more useful stuff here */
+ 
+   return NULL;
+}
+
+
+
 int main(){
 	//Catch the signal Ctrl+C for safe exit
 	signal(SIGINT, safeExit);
@@ -77,8 +120,6 @@ int main(){
             printf("WARNING: Failed to set base-driver thread to real-time priority\n");
     }
     //********************************************************************************
-
-
 
 
 
@@ -108,32 +149,24 @@ int main(){
 
 
     //********************************************************************************
-    //  Setup FIFO for user application
+    //  Setup FIFO reader (IPC) thread
     //********************************************************************************
-    int fd;
-    char * myfifo = "/tmp/myfifo";
-    float test = 0;
-
-    /* create the FIFO (named pipe) */
-    //Pipe has be open from both sides
-    if(mkfifo(myfifo, 0666))
-        printf("Failed to create FIFO special file: %s \n", strerror(errno));
-
-    /* open, read, and display the message from the FIFO */
-    if((fd = open(myfifo, O_NONBLOCK)) < 0)
-        printf("Failed to open FIFO special file: %s \n", strerror(errno));
-
+    pthread_t threadFIFOReader;
+    int thread_args = 1;
+    int thread_result;
+    thread_result = pthread_create(&threadFIFOReader, NULL, perform_work, &thread_args);
+    if(thread_result != 0){
+        printf("WARNING: Failed to create thread, %s, Returned: %i", strerror(errno), thread_result);
+        safeExit();
+    }
     //********************************************************************************
-
-
-
 
 
     //********************************************************************************
     // Read calcBasePositionPID.py File
     //********************************************************************************
-    PyObject *pName, *pCalcPIDModule, *pCalcPIDFunc;
-    PyObject *pCalcPIDArgs, *pCalcPIDValue;
+    PyObject *pName, *pCalcPIDModule, *pCalcPIDFunc = NULL;
+    PyObject *pCalcPIDArgs, *pCalcPIDValue = NULL;
     char *fileNameCalcPID, *funcNameCalcPID;
 
     //Module-Function names
@@ -164,11 +197,11 @@ int main(){
     //********************************************************************************
     // Read calcBasePositionPID.py File
     //********************************************************************************
-    PyObject *pKinematicsModule;
-    PyObject *pFunc_cartesianVelocityToWheelVelocities;
-    PyObject *pFunc_wheelVelocitiesToCartesianVelocity;
-    PyObject *pFunc_wheelPositionsToCartesianPosition;
-    PyObject *pFunc_calcJacobianT;
+    PyObject *pKinematicsModule = NULL;
+    PyObject *pFunc_cartesianVelocityToWheelVelocities = NULL;
+    PyObject *pFunc_wheelVelocitiesToCartesianVelocity = NULL;
+    PyObject *pFunc_wheelPositionsToCartesianPosition = NULL;
+    PyObject *pFunc_calcJacobianT = NULL;
 
     //Arguments to pass to functions
     PyObject *pArgs_cartesianVelocityToWheelVelocities;
@@ -176,7 +209,7 @@ int main(){
     PyObject *pArgs_wheelPositionsToCartesianPosition;
     PyObject *pArgs_calcJacobianT;
 
-    PyObject *pKinematicsValue;
+    PyObject *pKinematicsValue = NULL;
 
     //Argument number
     int argsNum_cartesianVelocityToWheelVelocities = 3;
@@ -220,7 +253,7 @@ int main(){
 
 
     //DEBUG
-    base_setVelocity(pArgs_cartesianVelocityToWheelVelocities, pKinematicsValue, pFunc_cartesianVelocityToWheelVelocities, mecanumBase, 0.1f, 0.0f, 0.0f);
+    base_setVelocity(pArgs_cartesianVelocityToWheelVelocities, pKinematicsValue, pFunc_cartesianVelocityToWheelVelocities, mecanumBase, 0.01f, 0.0f, 0.0f);
 
 	while(ctrlLoop){
                 sleep_until(&ts,delay);
@@ -256,7 +289,7 @@ int main(){
                 //base_getVelocity(pArgs_wheelVelocitiesToCartesianVelocity, pKinematicsValue, pFunc_wheelVelocitiesToCartesianVelocity, &mecanumBase);
                 
 
-                printf("%.10f %.10f %.10f\n", mecanumBase.longitudinalPosition, mecanumBase.transversalPosition, mecanumBase.orientation);
+                //printf("%.10f %.10f %.10f\n", mecanumBase.longitudinalPosition, mecanumBase.transversalPosition, mecanumBase.orientation);
                 //printf("%.10f %.10f %.10f\n", mecanumBase.longitudinalVelocity, mecanumBase.transversalVelocity, mecanumBase.angularVelocity);
                 
                 setiopin(pin4,1);
@@ -271,6 +304,22 @@ int main(){
 	//	Safe Exit
 	//********************************************************************************
 	printf("\nSafe Exit\n");
+
+    //Close FIFO file
+    close(fd);
+
+    //Kill Thread
+    pthread_cancel(threadFIFOReader);
+
+	//Thread Join
+    printf("In main: thread has completed\n");
+    assert(0 == pthread_join(threadFIFOReader, NULL));
+
+    //Close FIFO file
+    close(fd);
+    //Remove the FIFO
+    unlink(myfifo);
+
 	//Stop Motors
     base_setControlMode(&mecanumBase, 0x01);
 	motor_setRPM(motorFL, 0);
@@ -286,16 +335,11 @@ int main(){
     Py_XDECREF(pCalcPIDArgs);
     Py_XDECREF(pCalcPIDValue);
 
+    //Close I2C
+    terminate_I2C();
 
     //Finalize Python interpreter
     Py_Finalize();
-
-    //Close FIFO file
-    close(fd);
-    //Close I2C
-    terminate_I2C();
-    /* remove the FIFO */
-    unlink(myfifo);
 
     //********************************************************************************
 
