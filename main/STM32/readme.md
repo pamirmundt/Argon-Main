@@ -11,11 +11,11 @@ Toolchain
 I2C Setup
 ------------
 **Baudwidth:** 400 kHz (fast-mode)  
-**Rise-time:** 300 ns (~294ns)  
+**Rise-time:** 300 ns (~271ns)  
 **RPi Pullups:** 1.8 kOhms  
-**Board Pullups:** 430 Ohms (parallel with 1.8k)  
-**Total resistance on bus:** 347.08 Ohms  
-**Current Sink:** 9,5 mA (0,009507 Amps)  
+**Board Pullups:** 390 Ohms (parallel with 1.8k)  
+**Total resistance on bus:** 320.54 Ohms  
+**Current Sink:** 10.29mA (0,01029 Amps)  
 **I2C Bus Capacitance:** ~1 nF (10^-9 Farad)  
 
 ####Useful Links for I2C
