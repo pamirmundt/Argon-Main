@@ -25,6 +25,10 @@ typedef struct{
 	float longitudinalVelocity;
 	float transversalVelocity;
 	float angularVelocity;
+
+	float refLongitudinalVelocity;
+	float refTransversalVelocity;
+	float refAngularVelocity;
 	
 	//PID
 	//Longitudinal PID 
@@ -134,7 +138,7 @@ void base_getVelocity(PyObject *pArgs_wheelVelocitiesToCartesianVelocity, PyObje
 //@param longitudinalVelocity - forward/backward velocity
 //@param transversalVelocity - sideway velocity
 //@param angularVelocity - rotational velocity
-void base_setVelocity(PyObject *pArgs_cartesianVelocityToWheelVelocities, PyObject *pKinematicsValue, PyObject *pFunc_cartesianVelocityToWheelVelocities, Base base, float longitudinalVelocity, float transversalVelocity, float angularVelocity);
+void base_setVelocity(PyObject *pArgs_cartesianVelocityToWheelVelocities, PyObject *pFunc_cartesianVelocityToWheelVelocities, Base base, float longitudinalVelocity, float transversalVelocity, float angularVelocity);
 
 //calculate wheel torques
 //Calculates wheel torques from base force with Jacobian Transpose

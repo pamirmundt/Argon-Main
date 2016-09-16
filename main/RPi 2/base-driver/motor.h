@@ -33,6 +33,9 @@
 
 typedef struct{
 	uint16_t slaveAddr;
+
+	int32_t encoderPosition;
+	int32_t RPM;
 	//int32_t lastEncPos;
 }Motor;
 

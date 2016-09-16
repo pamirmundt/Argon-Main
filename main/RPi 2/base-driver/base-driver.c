@@ -7,8 +7,11 @@
 //Print Baudrate
 //sudo cat /sys/module/i2c_bcm2708/parameters/baudrate
 
+//Set governor
+//sudo sh -c "echo performance > /sys/devices/system/cpu/cpufreq/policy0/scaling_governor"
+
 //RPI-2 Pullups: 1.8kOhm
-//STM Pullups: 430 Ohm
+//STM Pullups: 390 Ohm
 
 #include <time.h>
 #include <sys/mman.h>   //Memory Lock
@@ -17,6 +20,7 @@
 #include <errno.h>
 #include <Python.h>
 #include "base.h"
+#include "IPC.h"
 
 
 //FIFO
@@ -45,59 +49,83 @@ Base mecanumBase;
 const float Ktv = 100000.0f;
 
 //Control Loop Speed (100Hz - p:0.01)
-const unsigned int delay = 10000000;        //Nano Seconds
+const unsigned int delay = 10000000;         //NanoSeconds
 const float contPeriod = 0.001;              //NanoSeconds to Seconds
 
 //Prototype Functions
 static void sleep_until(struct timespec *ts, int delay);
 void safeExit();
 void pyCalcPID(PyObject *pArgs, PyObject *pValue, PyObject *pFunc);
-//debug
+
+//DEBUG
 FILE *init_gpio(int gpioport);
 static void panic(char *message);
 void setiopin(FILE *fp, int val);
 
 //FIFO Variables
+//Incoming Fifo
 int fd;
-char * myfifo = "/tmp/myfifo";
+char * inputFifo = "/tmp/mecanumBaseDriverInput";
+//Outgoing Fifo
+int fd2;
+char * outputFifo = "/tmp/mecanumBaseDriverOutput";
 
-void* perform_work(void* argument) {
-	//DEBUG
-    int passed_in_value;
-    passed_in_value = *((int *) argument);
+//TESTT
+//Python Functions
+PyObject *pKinematicsModule = NULL;
+PyObject *pFunc_cartesianVelocityToWheelVelocities = NULL;
+PyObject *pFunc_wheelVelocitiesToCartesianVelocity = NULL;
+PyObject *pFunc_wheelPositionsToCartesianPosition = NULL;
+PyObject *pFunc_calcJacobianT = NULL;
+
+//Arguments to pass to functions
+PyObject *pArgs_cartesianVelocityToWheelVelocities = NULL;
+PyObject *pArgs_wheelVelocitiesToCartesianVelocity = NULL;
+PyObject *pArgs_wheelPositionsToCartesianPosition = NULL;
+PyObject *pArgs_calcJacobianT = NULL;
+
+PyObject *pKinematicsValue = NULL;
+
+
+void* perform_work() {
 
     //********************************************************************************
-    //  Setup FIFO for user application
+    //  Setup FIFO for user application (O_NONBLOCK, O_RDWR)
     //********************************************************************************
-    /* create the FIFO (named pipe) */
+    /* create the Output FIFO (named pipe) */
     //Pipe has be open from both sides
-    if(mkfifo(myfifo, 0666))
+    if(mkfifo(inputFifo, 0666))
         printf("Failed to create FIFO special file: %s \n", strerror(errno));
 
-    /* open, read, and display the message from the FIFO */
-    //O_NONBLOCK
-    //O_RDWR
-    if((fd = open(myfifo, O_RDWR)) < 0)
+    /* open, read, and display the message from the Outgoing FIFO */ 
+    if((fd = open(inputFifo, O_RDWR)) < 0)
         printf("Failed to open FIFO special file: %s \n", strerror(errno));
+    
+    /* create the Input FIFO (named pipe) */
+    //Pipe has be open from both sides
+    if(mkfifo(outputFifo, 0666))
+        printf("Failed to create FIFO special file: %s \n", strerror(errno));
+    /* open, read, and display the message from the Incoming FIFO */
+    if((fd2 = open(outputFifo, O_RDWR)) < 0)
+        printf("Failed to open FIFO special file: %s \n", strerror(errno));
+
     //********************************************************************************
+
 
 
     while(ctrlLoop){
-        printf("Hello World! It's me, thread with argument %d!\n", passed_in_value);
-        char msg[10];
-        float test = 0;
-        if(read(fd, &msg, sizeof(msg)) > 0){
-        	memcpy(&test, &msg[0], sizeof(test));
-       		printf("Received: %f \n", test);
+        printf("Hello World! It's me, thread with argument\n");
+        
+        //Fifo Incoming Data Buffer
+        char incomingMsg[13] = {0};
+        if(read(fd, &incomingMsg, sizeof(incomingMsg)) > 0){
+        	IPCParser(incomingMsg);
         }
-        usleep(100000);
+
     }
- 
-   /* optionally: insert more useful stuff here */
  
    return NULL;
 }
-
 
 
 int main(){
@@ -135,6 +163,10 @@ int main(){
     motorRR.slaveAddr = 0x23;
     base_init(&mecanumBase, &motorFL, &motorFR, &motorRL, &motorRR);
     //Default Control Mode: Velocity Control
+    //Control Modes
+    //0: Manuel Mode
+    //1: Velocity Control Mode (Default)
+    //2: Position Control Mode
     base_setControlMode(&mecanumBase, 0x01);
 
     //Initialize clock for nanosecond intervals
@@ -146,21 +178,6 @@ int main(){
 
     //DEBUG
     FILE *pin4 = init_gpio(4);
-
-
-    //********************************************************************************
-    //  Setup FIFO reader (IPC) thread
-    //********************************************************************************
-    pthread_t threadFIFOReader;
-    int thread_args = 1;
-    int thread_result;
-    thread_result = pthread_create(&threadFIFOReader, NULL, perform_work, &thread_args);
-    if(thread_result != 0){
-        printf("WARNING: Failed to create thread, %s, Returned: %i", strerror(errno), thread_result);
-        safeExit();
-    }
-    //********************************************************************************
-
 
     //********************************************************************************
     // Read calcBasePositionPID.py File
@@ -197,19 +214,6 @@ int main(){
     //********************************************************************************
     // Read calcBasePositionPID.py File
     //********************************************************************************
-    PyObject *pKinematicsModule = NULL;
-    PyObject *pFunc_cartesianVelocityToWheelVelocities = NULL;
-    PyObject *pFunc_wheelVelocitiesToCartesianVelocity = NULL;
-    PyObject *pFunc_wheelPositionsToCartesianPosition = NULL;
-    PyObject *pFunc_calcJacobianT = NULL;
-
-    //Arguments to pass to functions
-    PyObject *pArgs_cartesianVelocityToWheelVelocities;
-    PyObject *pArgs_wheelVelocitiesToCartesianVelocity;
-    PyObject *pArgs_wheelPositionsToCartesianPosition;
-    PyObject *pArgs_calcJacobianT;
-
-    PyObject *pKinematicsValue = NULL;
 
     //Argument number
     int argsNum_cartesianVelocityToWheelVelocities = 3;
@@ -252,20 +256,53 @@ int main(){
     //********************************************************************************
 
 
+
+    //********************************************************************************
+    //  Setup FIFO reader (IPC) thread
+    //********************************************************************************
+    pthread_t threadFIFOReader;
+    int thread_result;
+    thread_result = pthread_create(&threadFIFOReader, NULL, perform_work, NULL);
+    if(thread_result != 0){
+        printf("WARNING: Failed to create thread, %s, Returned: %i", strerror(errno), thread_result);
+        safeExit();
+    }
+    //********************************************************************************
+
+
+
+
     //DEBUG
-    base_setVelocity(pArgs_cartesianVelocityToWheelVelocities, pKinematicsValue, pFunc_cartesianVelocityToWheelVelocities, mecanumBase, 0.01f, 0.0f, 0.0f);
+    //base_setVelocity(pArgs_cartesianVelocityToWheelVelocities, pKinematicsValue, pFunc_cartesianVelocityToWheelVelocities, mecanumBase, 0.1f, 0.0f, 0.0f);
 
 	while(ctrlLoop){
                 sleep_until(&ts,delay);
 
-                /*
-                //Check for Pipe if there is data with NON-BLOCKING mode
-                if(read(fd, &test, sizeof(test)) > 0)
-                        printf("Received: %f \n", test);
-                */
+                //Update Wheel Position
+                mecanumBase.frontLeftWheel.encoderPosition = motor_getPos(mecanumBase.frontLeftWheel);    
+                mecanumBase.frontRightWheel.encoderPosition = motor_getPos(mecanumBase.frontRightWheel);
+                mecanumBase.rearLeftWheel.encoderPosition = motor_getPos(mecanumBase.rearLeftWheel);
+                mecanumBase.rearRightWheel.encoderPosition = motor_getPos(mecanumBase.rearRightWheel);
+                //Update wheel velocity
+                mecanumBase.frontLeftWheel.RPM = motor_getSpeed(mecanumBase.frontLeftWheel);
+                mecanumBase.frontRightWheel.RPM = motor_getSpeed(mecanumBase.frontRightWheel);
+                mecanumBase.rearLeftWheel.RPM = motor_getSpeed(mecanumBase.rearLeftWheel);
+                mecanumBase.rearRightWheel.RPM = motor_getSpeed(mecanumBase.rearRightWheel);
             
-                //Update Position
+                //Update Base Position
                 base_getUpdatePosition(pArgs_wheelPositionsToCartesianPosition, pKinematicsValue, pFunc_wheelPositionsToCartesianPosition, &mecanumBase);
+                //Update Velocity
+                base_getVelocity(pArgs_wheelVelocitiesToCartesianVelocity, pKinematicsValue, pFunc_wheelVelocitiesToCartesianVelocity, &mecanumBase);
+
+                //********************************************************************************
+                // Manuel Control Mode: 0x00
+                // Velocity Control Mode: 0x01
+                //********************************************************************************
+                if((mecanumBase.controlMode == 0x00) | (mecanumBase.controlMode == 0x01)){
+                    base_setVelocity(pArgs_cartesianVelocityToWheelVelocities, pFunc_cartesianVelocityToWheelVelocities, mecanumBase, mecanumBase.refLongitudinalVelocity, mecanumBase.refTransversalVelocity, mecanumBase.refAngularVelocity);
+                }
+                //********************************************************************************
+
 
 
                 //********************************************************************************
@@ -277,16 +314,12 @@ int main(){
                     base_calcWheelTorques(pArgs_calcJacobianT, pKinematicsValue, pFunc_calcJacobianT, &mecanumBase);
 
                     //Set wheel velocity(RPM)
-                    motor_setRPM(motorFL, mecanumBase.wheelTorques[0]*Ktv);
-                    motor_setRPM(motorFR, mecanumBase.wheelTorques[1]*Ktv);
-                    motor_setRPM(motorRL, mecanumBase.wheelTorques[2]*Ktv);
-                    motor_setRPM(motorRR, mecanumBase.wheelTorques[3]*Ktv);
+                    motor_setRPM(mecanumBase.frontLeftWheel, mecanumBase.wheelTorques[0]*Ktv);
+                    motor_setRPM(mecanumBase.frontRightWheel, mecanumBase.wheelTorques[1]*Ktv);
+                    motor_setRPM(mecanumBase.rearLeftWheel, mecanumBase.wheelTorques[2]*Ktv);
+                    motor_setRPM(mecanumBase.rearRightWheel, mecanumBase.wheelTorques[3]*Ktv);
                 }
                 //********************************************************************************
-
-
-                //DEBUG
-                //base_getVelocity(pArgs_wheelVelocitiesToCartesianVelocity, pKinematicsValue, pFunc_wheelVelocitiesToCartesianVelocity, &mecanumBase);
                 
 
                 //printf("%.10f %.10f %.10f\n", mecanumBase.longitudinalPosition, mecanumBase.transversalPosition, mecanumBase.orientation);
@@ -307,6 +340,7 @@ int main(){
 
     //Close FIFO file
     close(fd);
+    close(fd2);
 
     //Kill Thread
     pthread_cancel(threadFIFOReader);
@@ -315,10 +349,12 @@ int main(){
     printf("In main: thread has completed\n");
     assert(0 == pthread_join(threadFIFOReader, NULL));
 
-    //Close FIFO file
+    //Close FIFO files
     close(fd);
+    close(fd2);
     //Remove the FIFO
-    unlink(myfifo);
+    unlink(inputFifo);
+    unlink(outputFifo);
 
 	//Stop Motors
     base_setControlMode(&mecanumBase, 0x01);
@@ -422,6 +458,8 @@ void pyCalcPID(PyObject *pArgs, PyObject *pValue, PyObject *pFunc){
     mecanumBase.controlOrien = PyFloat_AsDouble(PyTuple_GetItem(pValue, 5));
 
 }
+
+
 
 //***************************************
 //      DEBUG

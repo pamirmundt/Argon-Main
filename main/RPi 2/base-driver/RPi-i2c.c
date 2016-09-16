@@ -3,8 +3,8 @@
 #include <string.h>
 #include <linux/i2c-dev.h>
 #include <errno.h>
-//#include <sys/ioctl.h>
-//#include <unistd.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
 #include <fcntl.h>
 #include "RPi-i2c.h"
 
@@ -33,7 +33,10 @@ int init_I2C(void){
 }
 
 int terminate_I2C(void){
-	close(fd);
+	if(close(fd) < 0)
+		printf("ioctl failed and returned errno: %s \n", strerror(errno));
+
+	return 0;
 }
 
 int open_Port(int devId){

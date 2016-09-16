@@ -56,7 +56,6 @@ void motor_getPID(Motor m, float* Kp, float* Ki, float* Kd){
 	memcpy(&i2cTXBuffer[0], &CMD, sizeof(CMD));
 	i2cMasterTransmit(m.slaveAddr);
 	
-	float params[3] = {0};
 	i2cMasterReceive(m.slaveAddr);
 	memcpy(Kp, &i2cRXBuffer[0], sizeof(float));
 	memcpy(Ki, &i2cRXBuffer[4], sizeof(float));
