@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <errno.h>
 #include "base.h"
 
 extern Base mecanumBase;

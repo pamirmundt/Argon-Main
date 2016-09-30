@@ -160,73 +160,81 @@ void setVelocityPID(Base* myBase, uint8_t motor, float Kp, float Ki, float Kd){
 //@param longitudinalPosition - forward/backward position
 //@param transversalPosition - sideway position
 //@param orientation - orientation
-void base_getUpdatePosition(PyObject *pArgs_wheelPositionsToCartesianPosition, PyObject *pKinematicsValue, PyObject *pFunc_wheelPositionsToCartesianPosition, Base* base){
-	
+void base_getUpdatePosition(PyObject *pArgs_wheelPositionsToCartesianPosition, PyObject *pFunc_wheelPositionsToCartesianPosition, Base* base){
 	//Fill Python Tuple
 	//encPos0, encPos1, encPos2, encPos3, lastencPos0, lastencPos1, lastencPos2, lastencPos3, longitudinalPosition, transversalPosition, orientation
 	//Encoder Positions
-	pKinematicsValue = PyLong_FromLong(base->frontLeftWheel.encoderPosition);
-	PyTuple_SetItem(pArgs_wheelPositionsToCartesianPosition, 0, pKinematicsValue);
-	pKinematicsValue = PyLong_FromLong(base->frontRightWheel.encoderPosition);
-	PyTuple_SetItem(pArgs_wheelPositionsToCartesianPosition, 1, pKinematicsValue);
-	pKinematicsValue = PyLong_FromLong(base->rearLeftWheel.encoderPosition);
-	PyTuple_SetItem(pArgs_wheelPositionsToCartesianPosition, 2, pKinematicsValue);
-	pKinematicsValue = PyLong_FromLong(base->rearRightWheel.encoderPosition);
+	PyObject *pValue;
+
+	pValue = PyLong_FromLong(base->frontLeftWheel.encoderPosition);
+	PyTuple_SetItem(pArgs_wheelPositionsToCartesianPosition, 0, pValue);
+	pValue = PyLong_FromLong(base->frontRightWheel.encoderPosition);
+	PyTuple_SetItem(pArgs_wheelPositionsToCartesianPosition, 1, pValue);
+	pValue = PyLong_FromLong(base->rearLeftWheel.encoderPosition);
+	PyTuple_SetItem(pArgs_wheelPositionsToCartesianPosition, 2, pValue);
+	pValue = PyLong_FromLong(base->rearRightWheel.encoderPosition);
+	PyTuple_SetItem(pArgs_wheelPositionsToCartesianPosition, 3, pValue);
 	//Last Encoder Positions
-	PyTuple_SetItem(pArgs_wheelPositionsToCartesianPosition, 3, pKinematicsValue);
-	pKinematicsValue = PyLong_FromLong(base->lastEncoderPositions[0]);
-	PyTuple_SetItem(pArgs_wheelPositionsToCartesianPosition, 4, pKinematicsValue);
-	pKinematicsValue = PyLong_FromLong(base->lastEncoderPositions[1]);
-	PyTuple_SetItem(pArgs_wheelPositionsToCartesianPosition, 5, pKinematicsValue);
-	pKinematicsValue = PyLong_FromLong(base->lastEncoderPositions[2]);
-	PyTuple_SetItem(pArgs_wheelPositionsToCartesianPosition, 6, pKinematicsValue);
-	pKinematicsValue = PyLong_FromLong(base->lastEncoderPositions[3]);
-	PyTuple_SetItem(pArgs_wheelPositionsToCartesianPosition, 7, pKinematicsValue);
+	pValue = PyLong_FromLong(base->lastEncoderPositions[0]);
+	PyTuple_SetItem(pArgs_wheelPositionsToCartesianPosition, 4, pValue);
+	pValue = PyLong_FromLong(base->lastEncoderPositions[1]);
+	PyTuple_SetItem(pArgs_wheelPositionsToCartesianPosition, 5, pValue);
+	pValue = PyLong_FromLong(base->lastEncoderPositions[2]);
+	PyTuple_SetItem(pArgs_wheelPositionsToCartesianPosition, 6, pValue);
+	pValue = PyLong_FromLong(base->lastEncoderPositions[3]);
+	PyTuple_SetItem(pArgs_wheelPositionsToCartesianPosition, 7, pValue);
 	//Mecanum Base Positions
-	pKinematicsValue = PyFloat_FromDouble(base->longitudinalPosition);
-    PyTuple_SetItem(pArgs_wheelPositionsToCartesianPosition, 8, pKinematicsValue);
-    pKinematicsValue = PyFloat_FromDouble(base->transversalPosition);
-    PyTuple_SetItem(pArgs_wheelPositionsToCartesianPosition, 9, pKinematicsValue);
-    pKinematicsValue = PyFloat_FromDouble(base->orientation);
-    PyTuple_SetItem(pArgs_wheelPositionsToCartesianPosition, 10, pKinematicsValue);
+	pValue = PyFloat_FromDouble(base->longitudinalPosition);
+    PyTuple_SetItem(pArgs_wheelPositionsToCartesianPosition, 8, pValue);
+    pValue = PyFloat_FromDouble(base->transversalPosition);
+    PyTuple_SetItem(pArgs_wheelPositionsToCartesianPosition, 9, pValue);
+    pValue = PyFloat_FromDouble(base->orientation);
+    PyTuple_SetItem(pArgs_wheelPositionsToCartesianPosition, 10, pValue);
 
     //Execute pyhton function "wheelPositionsToCartesianPosition"
     //Arguments: lastEncPos0, lastEncPos1, lastEncPos2, lastEncPos3, longitudinalPosition, transversalPosition, orientation)
-    pKinematicsValue = PyObject_CallObject(pFunc_wheelPositionsToCartesianPosition, pArgs_wheelPositionsToCartesianPosition);
+    PyObject *pRetValue = PyObject_CallObject(pFunc_wheelPositionsToCartesianPosition, pArgs_wheelPositionsToCartesianPosition);
 
     //Return Arguments
     //Last Encoder Positions
-	base->lastEncoderPositions[0] = PyLong_AsLong(PyTuple_GetItem(pKinematicsValue, 0));
-	base->lastEncoderPositions[1] = PyLong_AsLong(PyTuple_GetItem(pKinematicsValue, 1));
-	base->lastEncoderPositions[2] = PyLong_AsLong(PyTuple_GetItem(pKinematicsValue, 2));
-	base->lastEncoderPositions[3] = PyLong_AsLong(PyTuple_GetItem(pKinematicsValue, 3));
+	base->lastEncoderPositions[0] = PyLong_AsLong(PyTuple_GetItem(pRetValue, 0));
+	base->lastEncoderPositions[1] = PyLong_AsLong(PyTuple_GetItem(pRetValue, 1));
+	base->lastEncoderPositions[2] = PyLong_AsLong(PyTuple_GetItem(pRetValue, 2));
+	base->lastEncoderPositions[3] = PyLong_AsLong(PyTuple_GetItem(pRetValue, 3));
 	//Base Positions
-	base->longitudinalPosition = PyFloat_AsDouble(PyTuple_GetItem(pKinematicsValue, 4));
-	base->transversalPosition = PyFloat_AsDouble(PyTuple_GetItem(pKinematicsValue, 5));
-	base->orientation = PyFloat_AsDouble(PyTuple_GetItem(pKinematicsValue, 6));
+	base->longitudinalPosition = PyFloat_AsDouble(PyTuple_GetItem(pRetValue, 4));
+	base->transversalPosition = PyFloat_AsDouble(PyTuple_GetItem(pRetValue, 5));
+	base->orientation = PyFloat_AsDouble(PyTuple_GetItem(pRetValue, 6));
 
+	Py_CLEAR(pValue);
+	Py_CLEAR(pRetValue);
 }
 
 //Gets the cartesian base velocity
 //@param longitudinalVelocity - forward/backward velocity
 //@param transversalVelocity - sideway velocity
 //@param angularVelocity - rotational velocity
-void base_getVelocity(PyObject *pArgs_wheelVelocitiesToCartesianVelocity, PyObject *pKinematicsValue, PyObject *pFunc_wheelVelocitiesToCartesianVelocity, Base* base){
-	
-  	pKinematicsValue = PyFloat_FromDouble(base->frontLeftWheel.RPM);
-	PyTuple_SetItem(pArgs_wheelVelocitiesToCartesianVelocity, 0, pKinematicsValue);
-	pKinematicsValue = PyFloat_FromDouble(base->frontRightWheel.RPM);
-	PyTuple_SetItem(pArgs_wheelVelocitiesToCartesianVelocity, 1, pKinematicsValue);
-	pKinematicsValue = PyFloat_FromDouble(base->rearLeftWheel.RPM);
-	PyTuple_SetItem(pArgs_wheelVelocitiesToCartesianVelocity, 2, pKinematicsValue);
-	pKinematicsValue = PyFloat_FromDouble(base->rearRightWheel.RPM);
-	PyTuple_SetItem(pArgs_wheelVelocitiesToCartesianVelocity, 3, pKinematicsValue);
-	
-	pKinematicsValue = PyObject_CallObject(pFunc_wheelVelocitiesToCartesianVelocity, pArgs_wheelVelocitiesToCartesianVelocity);
+void base_getVelocity(PyObject *pArgs_wheelVelocitiesToCartesianVelocity, PyObject *pFunc_wheelVelocitiesToCartesianVelocity, Base* base){
+	PyObject *pValue;
 
-	base->longitudinalVelocity = PyFloat_AsDouble(PyTuple_GetItem(pKinematicsValue, 0));
-	base->transversalVelocity = PyFloat_AsDouble(PyTuple_GetItem(pKinematicsValue, 1));
-	base->angularVelocity = PyFloat_AsDouble(PyTuple_GetItem(pKinematicsValue, 2));
+  	pValue = PyFloat_FromDouble(base->frontLeftWheel.RPM);
+	PyTuple_SetItem(pArgs_wheelVelocitiesToCartesianVelocity, 0, pValue);
+	pValue = PyFloat_FromDouble(base->frontRightWheel.RPM);
+	PyTuple_SetItem(pArgs_wheelVelocitiesToCartesianVelocity, 1, pValue);
+	pValue = PyFloat_FromDouble(base->rearLeftWheel.RPM);
+	PyTuple_SetItem(pArgs_wheelVelocitiesToCartesianVelocity, 2, pValue);
+	pValue = PyFloat_FromDouble(base->rearRightWheel.RPM);
+	PyTuple_SetItem(pArgs_wheelVelocitiesToCartesianVelocity, 3, pValue);
+	
+	//Execute pyhton function "wheelVelocitiesToCartesianVelocity"
+	PyObject *pRetValue = PyObject_CallObject(pFunc_wheelVelocitiesToCartesianVelocity, pArgs_wheelVelocitiesToCartesianVelocity);
+
+	base->longitudinalVelocity = PyFloat_AsDouble(PyTuple_GetItem(pRetValue, 0));
+	base->transversalVelocity = PyFloat_AsDouble(PyTuple_GetItem(pRetValue, 1));
+	base->angularVelocity = PyFloat_AsDouble(PyTuple_GetItem(pRetValue, 2));
+
+	Py_CLEAR(pValue);
+	Py_CLEAR(pRetValue);
 }
 
 //Sets the cartesian base velocity
@@ -234,7 +242,7 @@ void base_getVelocity(PyObject *pArgs_wheelVelocitiesToCartesianVelocity, PyObje
 //@param transversalVelocity - sideway velocity
 //@param angularVelocity - rotational velocity
 void base_setVelocity(PyObject *pArgs_cartesianVelocityToWheelVelocities, PyObject *pFunc_cartesianVelocityToWheelVelocities, Base base, float longitudinalVelocity, float transversalVelocity, float angularVelocity){
-	PyObject *pValue = NULL;
+	PyObject *pValue;
 
 	pValue = PyFloat_FromDouble(longitudinalVelocity);
 	PyTuple_SetItem(pArgs_cartesianVelocityToWheelVelocities, 0, pValue);
@@ -243,35 +251,43 @@ void base_setVelocity(PyObject *pArgs_cartesianVelocityToWheelVelocities, PyObje
 	pValue = PyFloat_FromDouble(angularVelocity);
 	PyTuple_SetItem(pArgs_cartesianVelocityToWheelVelocities, 2, pValue);
 
+	//Execute pyhton function "cartesianVelocityToWheelVelocities"
+	PyObject *pRetValue = PyObject_CallObject(pFunc_cartesianVelocityToWheelVelocities, pArgs_cartesianVelocityToWheelVelocities);
 
-	pValue = PyObject_CallObject(pFunc_cartesianVelocityToWheelVelocities, pArgs_cartesianVelocityToWheelVelocities);
+	motor_setRPM(base.frontLeftWheel, PyFloat_AsDouble(PyTuple_GetItem(pRetValue, 0)));
+	motor_setRPM(base.frontRightWheel, PyFloat_AsDouble(PyTuple_GetItem(pRetValue, 1)));
+	motor_setRPM(base.rearLeftWheel, PyFloat_AsDouble(PyTuple_GetItem(pRetValue, 2)));
+	motor_setRPM(base.rearRightWheel, PyFloat_AsDouble(PyTuple_GetItem(pRetValue, 3)));
 
-	motor_setRPM(base.frontLeftWheel, PyFloat_AsDouble(PyTuple_GetItem(pValue, 0)));
-	motor_setRPM(base.frontRightWheel, PyFloat_AsDouble(PyTuple_GetItem(pValue, 1)));
-	motor_setRPM(base.rearLeftWheel, PyFloat_AsDouble(PyTuple_GetItem(pValue, 2)));
-	motor_setRPM(base.rearRightWheel, PyFloat_AsDouble(PyTuple_GetItem(pValue, 3)));
+	Py_CLEAR(pValue);
+	Py_CLEAR(pRetValue);
 }
 
 //calculate wheel torques
 //Calculates wheel torques from base force with Jacobian Transpose
 //@param base
 //@param returns wheel torques
-void base_calcWheelTorques(PyObject *pArgs_calcJacobianT, PyObject *pKinematicsValue, PyObject *pFunc_calcJacobianT, Base* base){
-	pKinematicsValue = PyFloat_FromDouble(base->controlLong);
-	PyTuple_SetItem(pArgs_calcJacobianT, 0, pKinematicsValue);
-	pKinematicsValue = PyFloat_FromDouble(base->controlTrans);
-	PyTuple_SetItem(pArgs_calcJacobianT, 1, pKinematicsValue);
-	pKinematicsValue = PyFloat_FromDouble(base->controlOrien);
-	PyTuple_SetItem(pArgs_calcJacobianT, 2, pKinematicsValue);
+void base_calcWheelTorques(PyObject *pArgs_calcJacobianT, PyObject *pFunc_calcJacobianT, Base* base){
+	PyObject *pValue;
+
+	pValue = PyFloat_FromDouble(base->controlLong);
+	PyTuple_SetItem(pArgs_calcJacobianT, 0, pValue);
+	pValue = PyFloat_FromDouble(base->controlTrans);
+	PyTuple_SetItem(pArgs_calcJacobianT, 1, pValue);
+	pValue = PyFloat_FromDouble(base->controlOrien);
+	PyTuple_SetItem(pArgs_calcJacobianT, 2, pValue);
 
 	//Execute pyhton function "calcJacobianT"
     //Arguments: Longitudinal Force, Transversal Force, Orientation Force
-    pKinematicsValue = PyObject_CallObject(pFunc_calcJacobianT, pArgs_calcJacobianT);
+    PyObject *pRetValue = PyObject_CallObject(pFunc_calcJacobianT, pArgs_calcJacobianT);
 	
 	//Return Arguments
     //Left Front Wheel Torque (W0), Left Right Wheel Torque (W1), Rear Left Wheel Torque (W2), Rear Right Wheel Torque (W3)
-	base->wheelTorques[0] = PyFloat_AsDouble(PyTuple_GetItem(pKinematicsValue, 0));
-	base->wheelTorques[1] = PyFloat_AsDouble(PyTuple_GetItem(pKinematicsValue, 1));
-	base->wheelTorques[2] = PyFloat_AsDouble(PyTuple_GetItem(pKinematicsValue, 2));
-	base->wheelTorques[3] = PyFloat_AsDouble(PyTuple_GetItem(pKinematicsValue, 3));
+	base->wheelTorques[0] = PyFloat_AsDouble(PyTuple_GetItem(pRetValue, 0));
+	base->wheelTorques[1] = PyFloat_AsDouble(PyTuple_GetItem(pRetValue, 1));
+	base->wheelTorques[2] = PyFloat_AsDouble(PyTuple_GetItem(pRetValue, 2));
+	base->wheelTorques[3] = PyFloat_AsDouble(PyTuple_GetItem(pRetValue, 3));
+
+	Py_CLEAR(pValue);
+	Py_CLEAR(pRetValue);
 }

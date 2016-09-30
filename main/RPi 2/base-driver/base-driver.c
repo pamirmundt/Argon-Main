@@ -55,7 +55,7 @@ const float contPeriod = 0.001;              //NanoSeconds to Seconds
 //Prototype Functions
 static void sleep_until(struct timespec *ts, int delay);
 void safeExit();
-void pyCalcPID(PyObject *pArgs, PyObject *pValue, PyObject *pFunc);
+void pyCalcPID(PyObject *pArgs, PyObject *pFunc);
 
 //DEBUG
 FILE *init_gpio(int gpioport);
@@ -115,13 +115,8 @@ void* perform_work() {
 
     while(ctrlLoop){
         printf("Hello World! It's me, thread with argument\n");
-        
-        //Fifo Incoming Data Buffer
-        char incomingMsg[13] = {0};
-        if(read(fd, &incomingMsg, sizeof(incomingMsg)) > 0){
-        	IPCParser(incomingMsg);
-        }
-
+        //Fix: Returned Value
+        IPCHandler();
     }
  
    return NULL;
@@ -183,7 +178,7 @@ int main(){
     // Read calcBasePositionPID.py File
     //********************************************************************************
     PyObject *pName, *pCalcPIDModule, *pCalcPIDFunc = NULL;
-    PyObject *pCalcPIDArgs, *pCalcPIDValue = NULL;
+    PyObject *pCalcPIDArgs;
     char *fileNameCalcPID, *funcNameCalcPID;
 
     //Module-Function names
@@ -271,10 +266,6 @@ int main(){
 
 
 
-
-    //DEBUG
-    //base_setVelocity(pArgs_cartesianVelocityToWheelVelocities, pKinematicsValue, pFunc_cartesianVelocityToWheelVelocities, mecanumBase, 0.1f, 0.0f, 0.0f);
-
 	while(ctrlLoop){
                 sleep_until(&ts,delay);
 
@@ -288,17 +279,17 @@ int main(){
                 mecanumBase.frontRightWheel.RPM = motor_getSpeed(mecanumBase.frontRightWheel);
                 mecanumBase.rearLeftWheel.RPM = motor_getSpeed(mecanumBase.rearLeftWheel);
                 mecanumBase.rearRightWheel.RPM = motor_getSpeed(mecanumBase.rearRightWheel);
-            
+                
                 //Update Base Position
-                base_getUpdatePosition(pArgs_wheelPositionsToCartesianPosition, pKinematicsValue, pFunc_wheelPositionsToCartesianPosition, &mecanumBase);
+                base_getUpdatePosition(pArgs_wheelPositionsToCartesianPosition, pFunc_wheelPositionsToCartesianPosition, &mecanumBase);
                 //Update Velocity
-                base_getVelocity(pArgs_wheelVelocitiesToCartesianVelocity, pKinematicsValue, pFunc_wheelVelocitiesToCartesianVelocity, &mecanumBase);
-
+                base_getVelocity(pArgs_wheelVelocitiesToCartesianVelocity, pFunc_wheelVelocitiesToCartesianVelocity, &mecanumBase);
+                
                 //********************************************************************************
                 // Manuel Control Mode: 0x00
                 // Velocity Control Mode: 0x01
                 //********************************************************************************
-                if((mecanumBase.controlMode == 0x00) | (mecanumBase.controlMode == 0x01)){
+                if(mecanumBase.controlMode == 0x01){
                     base_setVelocity(pArgs_cartesianVelocityToWheelVelocities, pFunc_cartesianVelocityToWheelVelocities, mecanumBase, mecanumBase.refLongitudinalVelocity, mecanumBase.refTransversalVelocity, mecanumBase.refAngularVelocity);
                 }
                 //********************************************************************************
@@ -309,9 +300,9 @@ int main(){
                 // Position Control Mode: 0x02
                 //********************************************************************************
                 if(mecanumBase.controlMode == 0x02){
-                    pyCalcPID(pCalcPIDArgs, pCalcPIDValue, pCalcPIDFunc);
+                    pyCalcPID(pCalcPIDArgs, pCalcPIDFunc);
 
-                    base_calcWheelTorques(pArgs_calcJacobianT, pKinematicsValue, pFunc_calcJacobianT, &mecanumBase);
+                    base_calcWheelTorques(pArgs_calcJacobianT, pFunc_calcJacobianT, &mecanumBase);
 
                     //Set wheel velocity(RPM)
                     motor_setRPM(mecanumBase.frontLeftWheel, mecanumBase.wheelTorques[0]*Ktv);
@@ -322,9 +313,8 @@ int main(){
                 //********************************************************************************
                 
 
-                //printf("%.10f %.10f %.10f\n", mecanumBase.longitudinalPosition, mecanumBase.transversalPosition, mecanumBase.orientation);
+                printf("%.10f %.10f %.10f\n", mecanumBase.longitudinalPosition, mecanumBase.transversalPosition, mecanumBase.orientation);
                 //printf("%.10f %.10f %.10f\n", mecanumBase.longitudinalVelocity, mecanumBase.transversalVelocity, mecanumBase.angularVelocity);
-                
                 setiopin(pin4,1);
                 setiopin(pin4,0);
 	}
@@ -365,11 +355,10 @@ int main(){
 
     //Decrement the reference count for object
     //calcBasePositionPID
-    Py_XDECREF(pName);
-    Py_XDECREF(pCalcPIDModule);
-    Py_XDECREF(pCalcPIDFunc);
-    Py_XDECREF(pCalcPIDArgs);
-    Py_XDECREF(pCalcPIDValue);
+    Py_CLEAR(pName);
+    Py_CLEAR(pCalcPIDModule);
+    Py_CLEAR(pCalcPIDFunc);
+    Py_CLEAR(pCalcPIDArgs);
 
     //Close I2C
     terminate_I2C();
@@ -409,10 +398,12 @@ void safeExit(){ // can be called asynchronously
         - creates PyTuple
         - call python function
  */
-void pyCalcPID(PyObject *pArgs, PyObject *pValue, PyObject *pFunc){
+void pyCalcPID(PyObject *pArgs, PyObject *pFunc){
 
     //Create Pyhton Tuple
     //Control period
+    PyObject* pValue;
+
     pValue = PyFloat_FromDouble(contPeriod);
     PyTuple_SetItem(pArgs, 0, pValue);
 
@@ -448,7 +439,7 @@ void pyCalcPID(PyObject *pArgs, PyObject *pValue, PyObject *pFunc){
     
 
     //Execute pyhton function
-    pValue = PyObject_CallObject(pFunc, pArgs);
+    PyObject *pRetValue = PyObject_CallObject(pFunc, pArgs);
 
     mecanumBase.errPrevLong = PyFloat_AsDouble(PyTuple_GetItem(pValue, 0));
     mecanumBase.errPrevTrans = PyFloat_AsDouble(PyTuple_GetItem(pValue, 1));
@@ -457,6 +448,8 @@ void pyCalcPID(PyObject *pArgs, PyObject *pValue, PyObject *pFunc){
     mecanumBase.controlTrans = PyFloat_AsDouble(PyTuple_GetItem(pValue, 4));
     mecanumBase.controlOrien = PyFloat_AsDouble(PyTuple_GetItem(pValue, 5));
 
+    Py_CLEAR(pValue);
+    Py_CLEAR(pRetValue);
 }
 
 

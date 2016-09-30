@@ -10,7 +10,10 @@ int IPCHandler(){
     	IPCParser(incomingMsg);
     }
 
-    return 0;
+    if(errno != 0)
+    	printf("IPCHandler failed to read FIFO and returned errno: %s \n", strerror(errno));
+
+    return errno;
 }
 
 int IPCParser(char* IPCMSG){
@@ -33,7 +36,6 @@ int IPCParser(char* IPCMSG){
             memcpy(&params[1], &IPCMSG[5], sizeof(float));
             memcpy(&params[2], &IPCMSG[9], sizeof(float));
             //Set Base Velocity
-            printf("%f %f %f \n", params[0], params[1], params[2]);
             mecanumBase.refLongitudinalVelocity = params[0];
             mecanumBase.refTransversalVelocity = params[1];
             mecanumBase.refAngularVelocity = params[2];
@@ -60,8 +62,8 @@ int IPCParser(char* IPCMSG){
             char tx[12] = {0};
 
             memcpy(&tx[0], &mecanumBase.controlMode, sizeof(mecanumBase.controlMode));
-            //if(write(fd2, &tx, sizeof(tx)) < 0)
-            //    printf("Err \n");
+            if(write(fd2, &tx, sizeof(tx)) < 0)
+                printf("Err \n");
             
             break;
         }
@@ -72,8 +74,8 @@ int IPCParser(char* IPCMSG){
             memcpy(&tx[4], &mecanumBase.transversalVelocity, sizeof(mecanumBase.transversalVelocity));
             memcpy(&tx[8], &mecanumBase.angularVelocity, sizeof(mecanumBase.angularVelocity));
 
-            //if(write(fd2, &tx, sizeof(tx)) < 0)
-            //    printf("Err \n");
+            if(write(fd2, &tx, sizeof(tx)) < 0)
+                printf("Err \n");
 
             break;
         }
@@ -84,8 +86,8 @@ int IPCParser(char* IPCMSG){
             memcpy(&tx[4], &mecanumBase.transversalPosition, sizeof(mecanumBase.transversalPosition));
             memcpy(&tx[8], &mecanumBase.orientation, sizeof(mecanumBase.orientation));
 
-            //if(write(fd2, &tx, sizeof(tx)) < 0)
-            //    printf("Err \n");
+            if(write(fd2, &tx, sizeof(tx)) < 0)
+                printf("Err \n");
 
             break;
         }

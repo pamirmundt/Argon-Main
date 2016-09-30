@@ -126,13 +126,13 @@ void setVelocityPID(Base* myBase, uint8_t motor, float Kp, float Ki, float Kd);
 //@param longitudinalPosition - forward/backward position
 //@param transversalPosition - sideway position
 //@param orientation - orientation
-void base_getUpdatePosition(PyObject *pArgs_wheelPositionsToCartesianPosition, PyObject *pKinematicsValue, PyObject *pFunc_wheelPositionsToCartesianPosition, Base* base);
+void base_getUpdatePosition(PyObject *pArgs_wheelPositionsToCartesianPosition, PyObject *pFunc_wheelPositionsToCartesianPosition, Base* base);
 
 //Gets the cartesian base velocity
 //@param longitudinalVelocity - forward/backward velocity
 //@param transversalVelocity - sideway velocity
 //@param angularVelocity - rotational velocity
-void base_getVelocity(PyObject *pArgs_wheelVelocitiesToCartesianVelocity, PyObject *pKinematicsValue, PyObject *pFunc_wheelVelocitiesToCartesianVelocity, Base* base);
+void base_getVelocity(PyObject *pArgs_wheelVelocitiesToCartesianVelocity, PyObject *pFunc_wheelVelocitiesToCartesianVelocity, Base* base);
 
 //Sets the cartesian base velocity
 //@param longitudinalVelocity - forward/backward velocity
@@ -144,6 +144,6 @@ void base_setVelocity(PyObject *pArgs_cartesianVelocityToWheelVelocities, PyObje
 //Calculates wheel torques from base force with Jacobian Transpose
 //@param base
 //@param returns wheel torques
-void base_calcWheelTorques(PyObject *pArgs_calcJacobianT, PyObject *pKinematicsValue, PyObject *pFunc_calcJacobianT, Base* base);
+void base_calcWheelTorques(PyObject *pArgs_calcJacobianT, PyObject *pFunc_calcJacobianT, Base* base);
 
 #endif
