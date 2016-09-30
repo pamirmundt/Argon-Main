@@ -1,13 +1,12 @@
 #include <string.h>
 #include "base.h"
 
-/**
-  * @brief  Initialize Base
-			- Reset wheels
-			- Reset base parameters
-  * @param  None
-  * @retval None
-  */
+//	@brief  Initialize Base
+//			- Reset wheels
+//			- Reset base parameters
+//	@param Base
+//	@params FL - FR - RL - RR Wheels 	
+//	@retval None
 void base_init(Base* myBase, Motor* FLwheel, Motor* FRwheel, Motor* RLwheel, Motor* RRwheel){
 	//Reset base instance
 	memset(myBase, 0, sizeof(Base));
@@ -28,6 +27,10 @@ void base_init(Base* myBase, Motor* FLwheel, Motor* FRwheel, Motor* RLwheel, Mot
 	myBase->controlMode = 0x01;
 }
 
+//	@brief  Reset Base
+//			- Reset base struct (all stored values)
+//	@param Base
+//	@retval None
 void base_reset(Base* myBase){	
 	myBase->longitudinalPosition = 0.0f;
 	myBase->transversalPosition = 0.0f;
@@ -65,12 +68,26 @@ void base_reset(Base* myBase){
 	myBase->wheelTorques[3] = 0;
 }
 
+//	@brief  Get Current Base Position
+//			- Longitudinal Position (meters)
+//			- Transversal Position (meters)
+//			- Orientation (radians)
+//	@param Base
+//	@param float array for position
+//	@retval None
 void base_getPosition(Base* myBase, float positions[]){
 	positions[0] = myBase->longitudinalPosition;
 	positions[1] = myBase->transversalPosition;
 	positions[2] = myBase->orientation;
 }
 
+//	@brief  Base Set Control Mode
+//			- Mode: 0 - Manuel Mode
+//			- Mode: 1 - Velocity Mode
+//			- Mode: 2 - Position Mode
+//	@param Base
+//	@param mode
+//	@retval None
 void base_setControlMode(Base* myBase, uint8_t mode){
 	//Just reset variables (not wheels)
 	//Store wheels
@@ -156,10 +173,10 @@ void setVelocityPID(Base* myBase, uint8_t motor, float Kp, float Ki, float Kd){
 	}
 }
 
-//Gets the cartesian base position
-//@param longitudinalPosition - forward/backward position
-//@param transversalPosition - sideway position
-//@param orientation - orientation
+//	Gets the cartesian base position
+//	@param longitudinalPosition - forward/backward position
+//	@param transversalPosition - sideway position
+//	@param orientation - orientation
 void base_getUpdatePosition(PyObject *pArgs_wheelPositionsToCartesianPosition, PyObject *pFunc_wheelPositionsToCartesianPosition, Base* base){
 	//Fill Python Tuple
 	//encPos0, encPos1, encPos2, encPos3, lastencPos0, lastencPos1, lastencPos2, lastencPos3, longitudinalPosition, transversalPosition, orientation
@@ -210,10 +227,10 @@ void base_getUpdatePosition(PyObject *pArgs_wheelPositionsToCartesianPosition, P
 	Py_CLEAR(pRetValue);
 }
 
-//Gets the cartesian base velocity
-//@param longitudinalVelocity - forward/backward velocity
-//@param transversalVelocity - sideway velocity
-//@param angularVelocity - rotational velocity
+//	Gets the cartesian base velocity
+//	@param longitudinalVelocity - forward/backward velocity
+//	@param transversalVelocity - sideway velocity
+//	@param angularVelocity - rotational velocity
 void base_getVelocity(PyObject *pArgs_wheelVelocitiesToCartesianVelocity, PyObject *pFunc_wheelVelocitiesToCartesianVelocity, Base* base){
 	PyObject *pValue;
 
@@ -237,10 +254,10 @@ void base_getVelocity(PyObject *pArgs_wheelVelocitiesToCartesianVelocity, PyObje
 	Py_CLEAR(pRetValue);
 }
 
-//Sets the cartesian base velocity
-//@param longitudinalVelocity - forward/backward velocity
-//@param transversalVelocity - sideway velocity
-//@param angularVelocity - rotational velocity
+//	Sets the cartesian base velocity
+//	@param longitudinalVelocity - forward/backward velocity
+//	@param transversalVelocity - sideway velocity
+//	@param angularVelocity - rotational velocity
 void base_setVelocity(PyObject *pArgs_cartesianVelocityToWheelVelocities, PyObject *pFunc_cartesianVelocityToWheelVelocities, Base base, float longitudinalVelocity, float transversalVelocity, float angularVelocity){
 	PyObject *pValue;
 
@@ -263,10 +280,10 @@ void base_setVelocity(PyObject *pArgs_cartesianVelocityToWheelVelocities, PyObje
 	Py_CLEAR(pRetValue);
 }
 
-//calculate wheel torques
-//Calculates wheel torques from base force with Jacobian Transpose
-//@param base
-//@param returns wheel torques
+//	calculate wheel torques
+//	Calculates wheel torques from base force with Jacobian Transpose
+//	@param base
+//	@param returns wheel torques
 void base_calcWheelTorques(PyObject *pArgs_calcJacobianT, PyObject *pFunc_calcJacobianT, Base* base){
 	PyObject *pValue;
 

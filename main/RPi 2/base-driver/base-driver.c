@@ -53,9 +53,9 @@ const unsigned int delay = 10000000;         //NanoSeconds
 const float contPeriod = 0.001;              //NanoSeconds to Seconds
 
 //Prototype Functions
-static void sleep_until(struct timespec *ts, int delay);
 void safeExit();
 void pyCalcPID(PyObject *pArgs, PyObject *pFunc);
+static void sleep_until(struct timespec *ts, int delay);
 
 //DEBUG
 FILE *init_gpio(int gpioport);
@@ -70,19 +70,6 @@ char * inputFifo = "/tmp/mecanumBaseDriverInput";
 int fd2;
 char * outputFifo = "/tmp/mecanumBaseDriverOutput";
 
-//TESTT
-//Python Functions
-PyObject *pKinematicsModule = NULL;
-PyObject *pFunc_cartesianVelocityToWheelVelocities = NULL;
-PyObject *pFunc_wheelVelocitiesToCartesianVelocity = NULL;
-PyObject *pFunc_wheelPositionsToCartesianPosition = NULL;
-PyObject *pFunc_calcJacobianT = NULL;
-
-//Arguments to pass to functions
-PyObject *pArgs_cartesianVelocityToWheelVelocities = NULL;
-PyObject *pArgs_wheelVelocitiesToCartesianVelocity = NULL;
-PyObject *pArgs_wheelPositionsToCartesianPosition = NULL;
-PyObject *pArgs_calcJacobianT = NULL;
 
 
 void* perform_work() {
@@ -175,28 +162,26 @@ int main(){
     //********************************************************************************
     // Read calcBasePositionPID.py File
     //********************************************************************************
-    PyObject *pName, *pCalcPIDModule, *pCalcPIDFunc = NULL;
-    char *fileNameCalcPID, *funcNameCalcPID;
-
-    //Module-Function names
-    fileNameCalcPID = "calcBasePositionPID";
-    funcNameCalcPID = "calcBasePositionPID";
-
+    //Initialize the Python interpreter
     Py_Initialize();
+    
+    //File name for base position PID function (calcBasePositionPID.py)
+    char * fileNameCalcPID = "calcBasePositionPID";
+    //Module-Function names
+    char * funcNameCalcPID = "calcBasePositionPID";
 
-    pName = PyString_FromString(fileNameCalcPID);
-    pCalcPIDModule = PyImport_Import(pName);
-    Py_DECREF(pName);
+    PyObject * pName = PyString_FromString(fileNameCalcPID);
+    PyObject * pCalcPIDModule = PyImport_Import(pName);
+    Py_CLEAR(pName);
 
     //Check if calcPID module exists
-    if(pCalcPIDModule != NULL){
-        pCalcPIDFunc = PyObject_GetAttrString(pCalcPIDModule, funcNameCalcPID);
-    }
-    else {
+    if(pCalcPIDModule == NULL){
         PyErr_Print();
         fprintf(stderr, "Failed to load \"%s\"\n", fileNameCalcPID);
         safeExit();
     }
+
+    PyObject * pCalcPIDFunc = PyObject_GetAttrString(pCalcPIDModule, funcNameCalcPID);
 
     //Number of arguments to pass
     int calcPIDnumOfArgs = 10;
@@ -206,43 +191,44 @@ int main(){
     // Read calcBasePositionPID.py File
     //********************************************************************************
 
-    //Argument number
-    int argsNum_cartesianVelocityToWheelVelocities = 3;
-    int argsNum_wheelVelocitiesToCartesianVelocity = 4;
-    int argsNum_wheelPositionsToCartesianPosition = 11;
-    int argsNum_calcJacobianT = 3;
-
-    char *fileNameMecanumBaseKinematics, *funcNameMecanumBaseKinematics[4];
-
+    //File name for base kinematics functions (baseKinematics.py)
+    char * fileNameMecanumBaseKinematics = "baseKinematics";
     //Module-Function Names
-    fileNameMecanumBaseKinematics = "baseKinematics";
+    char * funcNameMecanumBaseKinematics[4];
     funcNameMecanumBaseKinematics[0] = "cartesianVelocityToWheelVelocities";
     funcNameMecanumBaseKinematics[1] = "wheelVelocitiesToCartesianVelocity";
     funcNameMecanumBaseKinematics[2] = "wheelPositionsToCartesianPosition";
     funcNameMecanumBaseKinematics[3] = "calcJacobianT";
 
     pName = PyString_FromString(fileNameMecanumBaseKinematics);
-    pKinematicsModule = PyImport_Import(pName);
-    Py_DECREF(pName);
+    PyObject * pKinematicsModule = PyImport_Import(pName);
+    Py_CLEAR(pName);
 
     //Check if baseKinematics module exists
-    if(pKinematicsModule != NULL){
-        pFunc_cartesianVelocityToWheelVelocities = PyObject_GetAttrString(pKinematicsModule, funcNameMecanumBaseKinematics[0]);
-        pFunc_wheelVelocitiesToCartesianVelocity = PyObject_GetAttrString(pKinematicsModule, funcNameMecanumBaseKinematics[1]);
-        pFunc_wheelPositionsToCartesianPosition = PyObject_GetAttrString(pKinematicsModule, funcNameMecanumBaseKinematics[2]);
-        pFunc_calcJacobianT = PyObject_GetAttrString(pKinematicsModule, funcNameMecanumBaseKinematics[3]);
-    }
-    else {
+    if (pKinematicsModule == NULL) {
         PyErr_Print();
         fprintf(stderr, "Failed to load \"%s\"\n", fileNameMecanumBaseKinematics);
         safeExit();
     }
 
+    //Python Functions
+    PyObject * pFunc_cartesianVelocityToWheelVelocities = PyObject_GetAttrString(pKinematicsModule, funcNameMecanumBaseKinematics[0]);
+    PyObject * pFunc_wheelVelocitiesToCartesianVelocity = PyObject_GetAttrString(pKinematicsModule, funcNameMecanumBaseKinematics[1]);
+    PyObject * pFunc_wheelPositionsToCartesianPosition = PyObject_GetAttrString(pKinematicsModule, funcNameMecanumBaseKinematics[2]);
+    PyObject * pFunc_calcJacobianT = PyObject_GetAttrString(pKinematicsModule, funcNameMecanumBaseKinematics[3]);
+
+    //Argument number
+    int argsNum_cartesianVelocityToWheelVelocities = 3;
+    int argsNum_wheelVelocitiesToCartesianVelocity = 4;
+    int argsNum_wheelPositionsToCartesianPosition = 11;
+    int argsNum_calcJacobianT = 3;
+
+    //Arguments to pass to functions
     //Create Pyhton Tuples
-    pArgs_cartesianVelocityToWheelVelocities = PyTuple_New(argsNum_cartesianVelocityToWheelVelocities);
-    pArgs_wheelVelocitiesToCartesianVelocity = PyTuple_New(argsNum_wheelVelocitiesToCartesianVelocity);
-    pArgs_wheelPositionsToCartesianPosition = PyTuple_New(argsNum_wheelPositionsToCartesianPosition);
-    pArgs_calcJacobianT = PyTuple_New(argsNum_calcJacobianT);
+    PyObject * pArgs_cartesianVelocityToWheelVelocities = PyTuple_New(argsNum_cartesianVelocityToWheelVelocities);
+    PyObject * pArgs_wheelVelocitiesToCartesianVelocity = PyTuple_New(argsNum_wheelVelocitiesToCartesianVelocity);
+    PyObject * pArgs_wheelPositionsToCartesianPosition = PyTuple_New(argsNum_wheelPositionsToCartesianPosition);
+    PyObject * pArgs_calcJacobianT = PyTuple_New(argsNum_calcJacobianT);
 
     //********************************************************************************
 
@@ -282,7 +268,6 @@ int main(){
                 base_getVelocity(pArgs_wheelVelocitiesToCartesianVelocity, pFunc_wheelVelocitiesToCartesianVelocity, &mecanumBase);
                 
                 //********************************************************************************
-                // Manuel Control Mode: 0x00
                 // Velocity Control Mode: 0x01
                 //********************************************************************************
                 if(mecanumBase.controlMode == 0x01){
@@ -324,10 +309,6 @@ int main(){
 	//********************************************************************************
 	printf("\nSafe Exit\n");
 
-    //Close FIFO file
-    close(fd);
-    close(fd2);
-
     //Kill Thread
     pthread_cancel(threadFIFOReader);
 
@@ -338,6 +319,7 @@ int main(){
     //Close FIFO files
     close(fd);
     close(fd2);
+
     //Remove the FIFO
     unlink(inputFifo);
     unlink(outputFifo);
@@ -348,13 +330,6 @@ int main(){
     motor_setRPM(motorFR, 0);
     motor_setRPM(motorRL, 0);
     motor_setRPM(motorRR, 0);
-
-    //Decrement the reference count for object
-    //calcBasePositionPID
-    Py_CLEAR(pName);
-    Py_CLEAR(pCalcPIDModule);
-    Py_CLEAR(pCalcPIDFunc);
-    Py_CLEAR(pCalcPIDArgs);
 
     //Close I2C
     terminate_I2C();
@@ -393,7 +368,7 @@ void safeExit(){ // can be called asynchronously
 /* Calculate position PID from calcBasePositionPID.py
         - creates PyTuple
         - call python function
- */
+*/
 void pyCalcPID(PyObject *pArgs, PyObject *pFunc){
 
     //Create Pyhton Tuple
