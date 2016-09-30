@@ -18,17 +18,17 @@ typedef struct{
 	Motor rearLeftWheel;
 	Motor rearRightWheel;
 	
-	float longitudinalPosition;
-	float transversalPosition;
-	float orientation;
+	volatile float longitudinalPosition;
+	volatile float transversalPosition;
+	volatile float orientation;
 
-	float longitudinalVelocity;
-	float transversalVelocity;
-	float angularVelocity;
+	volatile float longitudinalVelocity;
+	volatile float transversalVelocity;
+	volatile float angularVelocity;
 
-	float refLongitudinalVelocity;
-	float refTransversalVelocity;
-	float refAngularVelocity;
+	volatile float refLongitudinalVelocity;
+	volatile float refTransversalVelocity;
+	volatile float refAngularVelocity;
 	
 	//PID
 	//Longitudinal PID 

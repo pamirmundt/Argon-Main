@@ -64,6 +64,14 @@ int fifo_read(char rx[], uint8_t size){
     return 0;
 }
 
+int base_reset(){
+    char tx[txBufferSize] = {0};
+
+    uint8_t cmd = CMD_BASE_RESET;
+    memcpy(&tx[0], &cmd, sizeof(cmd));
+    return (fifo_write(tx, txBufferSize));
+}
+
 int base_set_velocity(float longitudinalVelocity, float transversalVelocity, float angularVelocity){
     char tx[txBufferSize] = {0};
 
@@ -153,13 +161,12 @@ int main()
     fd2 = open(outputFifo, O_RDWR);
 
     base_set_ctrl_mode(0x01);
-    base_set_velocity(0.0f, 0.0f, 0.0f);
+    base_set_velocity(0.1f, 0.0f, 0.0f);
 
     while(1){
         float sp[3] ={0};
-        base_get_ref_velocity(&sp[0], &sp[1], &sp[2]);
+        base_get_position(&sp[0], &sp[1], &sp[2]);
         printf("%f %f %f \n", sp[0], sp[1], sp[2]);
-
 
         usleep(100000);
     }

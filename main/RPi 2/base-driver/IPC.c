@@ -26,10 +26,15 @@ int IPCParser(char* IPCMSG){
 
     switch (CMD){
         //IPC Set functions
-        case base_reset:{
+        case CMD_BASE_RESET:{
+        	printf("Reset Base \n");
+        	base_reset(&mecanumBase);
+        	mecanumBase.longitudinalPosition = 0.0f;
+        	mecanumBase.transversalPosition = 0.0f;
+        	mecanumBase.orientation = 0.0f;
             break;
         }
-        case base_set_velocity:{
+        case CMD_BASE_SET_VELOCITY:{
             printf("Set Velocity \n");
             float params[3] = {0.0f};
             memcpy(&params[0], &IPCMSG[1], sizeof(float));
@@ -41,63 +46,79 @@ int IPCParser(char* IPCMSG){
             mecanumBase.refAngularVelocity = params[2];
             break;
         }
-        case base_set_ctrl_mode:{
+        case CMD_BASE_SET_CTRL_MODE:{
+        	printf("Set Control Mode \n");
             uint8_t params = 0;
             memcpy(&params, &IPCMSG[1], sizeof(uint8_t));
             base_setControlMode(&mecanumBase, params);
             break;
         }
-        case base_set_velocity_PID:{
+        case CMD_BASE_SET_VELOCITY_PID:{
             break;
         }
-        case base_set_position_PID:{
+        case CMD_BASE_SET_POSITION_PID:{
             break;
         }
-        case base_set_goal:{
+        case CMD_BASE_SET_GOAL:{
             break;
         }
 
         //IPC Get Functions
-        case base_get_ctrl_mode:{
+        case CMD_BASE_GET_CTRL_MODE:{
+        	printf("Get Control Mode \n");
             char tx[12] = {0};
-
             memcpy(&tx[0], &mecanumBase.controlMode, sizeof(mecanumBase.controlMode));
             if(write(fd2, &tx, sizeof(tx)) < 0)
                 printf("Err \n");
             
             break;
         }
-        case base_get_velocity:{            
+        case CMD_BASE_GET_VELOCITY:{
+        	printf("Get Velocity\n");       
             char tx[12] = {0};
-
-            memcpy(&tx[0], &mecanumBase.longitudinalVelocity, sizeof(mecanumBase.longitudinalVelocity));
-            memcpy(&tx[4], &mecanumBase.transversalVelocity, sizeof(mecanumBase.transversalVelocity));
-            memcpy(&tx[8], &mecanumBase.angularVelocity, sizeof(mecanumBase.angularVelocity));
+            float params[] = {mecanumBase.longitudinalVelocity, mecanumBase.transversalVelocity, mecanumBase.angularVelocity};
+            memcpy(&tx[0], &params[0], sizeof(float));
+            memcpy(&tx[4], &params[1], sizeof(float));
+            memcpy(&tx[8], &params[2], sizeof(float));
 
             if(write(fd2, &tx, sizeof(tx)) < 0)
                 printf("Err \n");
 
             break;
         }
-        case base_get_position:{
+        case CMD_BASE_GET_REF_VELOCITY:{  
+        	printf("Get Ref Velocity \n");          
             char tx[12] = {0};
-
-            memcpy(&tx[0], &mecanumBase.longitudinalPosition, sizeof(mecanumBase.longitudinalPosition));
-            memcpy(&tx[4], &mecanumBase.transversalPosition, sizeof(mecanumBase.transversalPosition));
-            memcpy(&tx[8], &mecanumBase.orientation, sizeof(mecanumBase.orientation));
+            float params[] = {mecanumBase.refLongitudinalVelocity, mecanumBase.refTransversalVelocity, mecanumBase.refAngularVelocity};
+            memcpy(&tx[0], &params[0], sizeof(float));
+            memcpy(&tx[4], &params[1], sizeof(float));
+            memcpy(&tx[8], &params[2], sizeof(float));
 
             if(write(fd2, &tx, sizeof(tx)) < 0)
                 printf("Err \n");
 
             break;
         }
-        case base_get_velocity_PID:{
+        case CMD_BASE_GET_POSITION:{
+        	printf("Get Position \n");
+            char tx[12] = {0};
+            float params[] = {mecanumBase.longitudinalPosition, mecanumBase.transversalPosition, mecanumBase.orientation};
+            memcpy(&tx[0], &params[0], sizeof(float));
+            memcpy(&tx[4], &params[1], sizeof(float));
+            memcpy(&tx[8], &params[2], sizeof(float));
+
+            if(write(fd2, &tx, sizeof(tx)) < 0)
+                printf("Err \n");
+
             break;
         }
-        case base_get_position_PID:{
+        case CMD_BASE_GET_VELOCITY_PID:{
             break;
         }
-        case base_get_goal:{
+        case CMD_BASE_GET_POSITION_PID:{
+            break;
+        }
+        case CMD_BASE_GET_GOAL:{
             break;
         }
 

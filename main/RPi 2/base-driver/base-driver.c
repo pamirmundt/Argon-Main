@@ -293,8 +293,8 @@ int main(){
                 }
                 //********************************************************************************
                 
-
-                printf("%.10f %.10f %.10f\n", mecanumBase.longitudinalPosition, mecanumBase.transversalPosition, mecanumBase.orientation);
+                //DEBUG
+                //printf("%.10f %.10f %.10f\n", mecanumBase.longitudinalPosition, mecanumBase.transversalPosition, mecanumBase.orientation);
                 //printf("%.10f %.10f %.10f\n", mecanumBase.longitudinalVelocity, mecanumBase.transversalVelocity, mecanumBase.angularVelocity);
                 setiopin(pin4,1);
                 setiopin(pin4,0);

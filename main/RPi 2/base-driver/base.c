@@ -31,26 +31,42 @@ void base_init(Base* myBase, Motor* FLwheel, Motor* FRwheel, Motor* RLwheel, Mot
 //			- Reset base struct (all stored values)
 //	@param Base
 //	@retval None
-void base_reset(Base* myBase){	
+void base_reset(Base* myBase){
+	//Reset Motors
+	motor_reset(myBase->frontLeftWheel);
+	motor_reset(myBase->frontRightWheel);
+	motor_reset(myBase->rearLeftWheel);
+	motor_reset(myBase->rearRightWheel);
+
+	//Reset Current Base Position
 	myBase->longitudinalPosition = 0.0f;
 	myBase->transversalPosition = 0.0f;
 	myBase->orientation = 0.0f;
-
+	//Reset Current Base Velocity
+	myBase->longitudinalVelocity = 0.0f;
+	myBase->transversalVelocity = 0.0f;
+	myBase->angularVelocity = 0.0f;
+	//Reset Reference Base Velocity
+	myBase->refLongitudinalVelocity = 0.0f;
+	myBase->refTransversalVelocity = 0.0f;
+	myBase->refAngularVelocity = 0.0f;
+	//Reset Reference Base Position
 	myBase->refLongitudinalPosition = 0.0f;
+	myBase->refTransversalPosition = 0.0f;
+	myBase->refOrientation = 0.0f;
+
 	myBase->integralLong = 0.0f;
 	myBase->derivativeLong = 0.0f;
 	myBase->controlLong = 0.0f;
 	myBase->errLong = 0.0f;
 	myBase->errPrevLong = 0.0f;
 	
-	myBase->refTransversalPosition = 0.0f;
 	myBase->integralTrans = 0.0f;
 	myBase->derivativeTrans = 0.0f;
 	myBase->controlTrans = 0.0f;
 	myBase->errTrans = 0.0f;
 	myBase->errPrevTrans = 0.0f;
 	
-	myBase->refOrientation = 0.0f;
 	myBase->integralOrien = 0.0f;
 	myBase->derivativeOrien = 0.0f;
 	myBase->controlOrien = 0.0f;
@@ -260,7 +276,6 @@ void base_getVelocity(PyObject *pArgs_wheelVelocitiesToCartesianVelocity, PyObje
 //	@param angularVelocity - rotational velocity
 void base_setVelocity(PyObject *pArgs_cartesianVelocityToWheelVelocities, PyObject *pFunc_cartesianVelocityToWheelVelocities, Base base, float longitudinalVelocity, float transversalVelocity, float angularVelocity){
 	PyObject *pValue;
-
 	pValue = PyFloat_FromDouble(longitudinalVelocity);
 	PyTuple_SetItem(pArgs_cartesianVelocityToWheelVelocities, 0, pValue);
 	pValue = PyFloat_FromDouble(transversalVelocity);

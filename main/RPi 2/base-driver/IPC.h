@@ -29,20 +29,20 @@ extern int fd2;
 #define motor_get_i2c_addr      0x25
 
 //Base Set CMDs
-#define base_reset              0x30
-#define base_set_velocity       0x31
-#define base_set_ctrl_mode      0x32
-#define base_set_velocity_PID   0x33
-#define base_set_position_PID   0x34
-#define base_set_goal           0x35
+#define CMD_BASE_RESET          	0x30
+#define CMD_BASE_SET_VELOCITY       0x31
+#define CMD_BASE_SET_CTRL_MODE      0x32
+#define CMD_BASE_SET_VELOCITY_PID   0x33
+#define CMD_BASE_SET_POSITION_PID   0x34
+#define CMD_BASE_SET_GOAL           0x35
 //Base get CMDs
-#define base_get_ctrl_mode      0x40
-#define base_get_velocity       0x41
-#define base_get_ref_velocity   0x42
-#define base_get_position       0x43
-#define base_get_velocity_PID   0x44
-#define base_get_position_PID   0x45
-#define base_get_goal           0x46
+#define CMD_BASE_GET_CTRL_MODE      0x40
+#define CMD_BASE_GET_VELOCITY       0x41
+#define CMD_BASE_GET_REF_VELOCITY   0x42
+#define CMD_BASE_GET_POSITION       0x43
+#define CMD_BASE_GET_VELOCITY_PID   0x44
+#define CMD_BASE_GET_POSITION_PID   0x45
+#define CMD_BASE_GET_GOAL           0x46
 
 int IPCHandler();
 int IPCParser(char* IPCMSG);
