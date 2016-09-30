@@ -84,8 +84,6 @@ PyObject *pArgs_wheelVelocitiesToCartesianVelocity = NULL;
 PyObject *pArgs_wheelPositionsToCartesianPosition = NULL;
 PyObject *pArgs_calcJacobianT = NULL;
 
-PyObject *pKinematicsValue = NULL;
-
 
 void* perform_work() {
 
@@ -162,7 +160,7 @@ int main(){
     //0: Manuel Mode
     //1: Velocity Control Mode (Default)
     //2: Position Control Mode
-    base_setControlMode(&mecanumBase, 0x01);
+    base_setControlMode(&mecanumBase, 0x02);
 
     //Initialize clock for nanosecond intervals
     struct timespec ts;
@@ -178,15 +176,11 @@ int main(){
     // Read calcBasePositionPID.py File
     //********************************************************************************
     PyObject *pName, *pCalcPIDModule, *pCalcPIDFunc = NULL;
-    PyObject *pCalcPIDArgs;
     char *fileNameCalcPID, *funcNameCalcPID;
 
     //Module-Function names
     fileNameCalcPID = "calcBasePositionPID";
     funcNameCalcPID = "calcBasePositionPID";
-
-    //Number of arguments to pass
-    int calcPIDnumOfArgs = 10;
 
     Py_Initialize();
 
@@ -204,7 +198,9 @@ int main(){
         safeExit();
     }
 
-    pCalcPIDArgs = PyTuple_New(calcPIDnumOfArgs);
+    //Number of arguments to pass
+    int calcPIDnumOfArgs = 10;
+    PyObject * pCalcPIDArgs = PyTuple_New(calcPIDnumOfArgs);
 
     //********************************************************************************
     // Read calcBasePositionPID.py File
@@ -441,14 +437,14 @@ void pyCalcPID(PyObject *pArgs, PyObject *pFunc){
     //Execute pyhton function
     PyObject *pRetValue = PyObject_CallObject(pFunc, pArgs);
 
-    mecanumBase.errPrevLong = PyFloat_AsDouble(PyTuple_GetItem(pValue, 0));
-    mecanumBase.errPrevTrans = PyFloat_AsDouble(PyTuple_GetItem(pValue, 1));
-    mecanumBase.errPrevOrien = PyFloat_AsDouble(PyTuple_GetItem(pValue, 2));
-    mecanumBase.controlLong = PyFloat_AsDouble(PyTuple_GetItem(pValue, 3));
-    mecanumBase.controlTrans = PyFloat_AsDouble(PyTuple_GetItem(pValue, 4));
-    mecanumBase.controlOrien = PyFloat_AsDouble(PyTuple_GetItem(pValue, 5));
+    mecanumBase.errPrevLong = PyFloat_AsDouble(PyTuple_GetItem(pRetValue, 0));
+    mecanumBase.errPrevTrans = PyFloat_AsDouble(PyTuple_GetItem(pRetValue, 1));
+    mecanumBase.errPrevOrien = PyFloat_AsDouble(PyTuple_GetItem(pRetValue, 2));
+    mecanumBase.controlLong = PyFloat_AsDouble(PyTuple_GetItem(pRetValue, 3));
+    mecanumBase.controlTrans = PyFloat_AsDouble(PyTuple_GetItem(pRetValue, 4));
+    mecanumBase.controlOrien = PyFloat_AsDouble(PyTuple_GetItem(pRetValue, 5));
 
-    Py_CLEAR(pValue);
+    //Py_CLEAR(pValue);
     Py_CLEAR(pRetValue);
 }
 

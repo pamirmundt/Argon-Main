@@ -206,7 +206,7 @@ void base_getUpdatePosition(PyObject *pArgs_wheelPositionsToCartesianPosition, P
 	base->transversalPosition = PyFloat_AsDouble(PyTuple_GetItem(pRetValue, 5));
 	base->orientation = PyFloat_AsDouble(PyTuple_GetItem(pRetValue, 6));
 
-	Py_CLEAR(pValue);
+	//Py_CLEAR(pValue);
 	Py_CLEAR(pRetValue);
 }
 
@@ -233,7 +233,7 @@ void base_getVelocity(PyObject *pArgs_wheelVelocitiesToCartesianVelocity, PyObje
 	base->transversalVelocity = PyFloat_AsDouble(PyTuple_GetItem(pRetValue, 1));
 	base->angularVelocity = PyFloat_AsDouble(PyTuple_GetItem(pRetValue, 2));
 
-	Py_CLEAR(pValue);
+	//Py_CLEAR(pValue);
 	Py_CLEAR(pRetValue);
 }
 
@@ -259,7 +259,7 @@ void base_setVelocity(PyObject *pArgs_cartesianVelocityToWheelVelocities, PyObje
 	motor_setRPM(base.rearLeftWheel, PyFloat_AsDouble(PyTuple_GetItem(pRetValue, 2)));
 	motor_setRPM(base.rearRightWheel, PyFloat_AsDouble(PyTuple_GetItem(pRetValue, 3)));
 
-	Py_CLEAR(pValue);
+	//Py_CLEAR(pValue);
 	Py_CLEAR(pRetValue);
 }
 
@@ -288,6 +288,6 @@ void base_calcWheelTorques(PyObject *pArgs_calcJacobianT, PyObject *pFunc_calcJa
 	base->wheelTorques[2] = PyFloat_AsDouble(PyTuple_GetItem(pRetValue, 2));
 	base->wheelTorques[3] = PyFloat_AsDouble(PyTuple_GetItem(pRetValue, 3));
 
-	Py_CLEAR(pValue);
+	//Py_CLEAR(pValue);
 	Py_CLEAR(pRetValue);
 }
