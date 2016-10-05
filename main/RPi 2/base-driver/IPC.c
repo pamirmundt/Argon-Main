@@ -35,6 +35,33 @@ int IPCHandler(){
     return -1;
 }
 
+Motor motorSelect(uint8_t wheelNumber){
+	Motor motor;
+	switch(wheelNumber){
+		//Front Left Wheel
+		case 0:{
+			motor = mecanumBase.frontLeftWheel;
+			break;
+		}
+		//Front Right Wheel
+		case 1:{
+			motor = mecanumBase.frontRightWheel;
+			break;
+		}
+		//Rear Left Wheel
+		case 2:{
+			motor = mecanumBase.rearLeftWheel;
+			break;
+		}
+		//Rear Rght Wheel
+		case 3:{
+			motor = mecanumBase.rearRightWheel;
+			break;
+		}
+	}
+	return motor;
+}
+
 int IPCParser(char* IPCMSG){
     //First byte is Command
     //Parse first byte
@@ -44,7 +71,187 @@ int IPCParser(char* IPCMSG){
     printf("%d \n", CMD);
     
     switch (CMD){
-        //IPC Set functions
+    	//IPC Motor Set CMDs
+    	case CMD_MOTOR_RESET:{
+    		printf("Motor Reset \n");
+
+    		uint8_t rxMsgSize = 1;
+    		char rx[rxMsgSize];
+    		fifo_read(rx, rxMsgSize);
+
+    		uint8_t wheelNumber;
+    		memcpy(&wheelNumber, &rx[0], sizeof(wheelNumber));
+
+    		motor_reset(motorSelect(wheelNumber));
+    		break;
+    	}     
+		case CMD_MOTOR_SET_RPM:{
+			printf("Motor Set RPM\n");
+
+    		uint8_t rxMsgSize = 5;
+    		char rx[rxMsgSize];
+    		fifo_read(rx, rxMsgSize);
+
+    		uint8_t wheelNumber;
+    		float RPM;
+    		memcpy(&wheelNumber, &rx[0], sizeof(wheelNumber));
+    		memcpy(&RPM, &rx[1], sizeof(RPM));
+
+    		//YENİ BİR PARAMETRE LAZIM
+
+    		//motor_setRPM(motorSelect(wheelNumber), RPM);
+			break;
+		}
+ 		//CMD_MOTOR_SET_VELOCITY_PID
+ 		case CMD_MOTOR_SET_POWER:{
+ 			printf("Motor Set Power \n");
+
+ 			uint8_t rxMsgSize = 5;
+ 			char rx[rxMsgSize];
+ 			fifo_read(rx, rxMsgSize);
+
+ 			uint8_t wheelNumber;
+ 			float power;
+ 			memcpy(&wheelNumber, &rx[0], sizeof(wheelNumber));
+ 			memcpy(&power, &rx[1], sizeof(power));
+
+ 			motor_setPower(motorSelect(wheelNumber), power);
+ 			break;
+ 		}
+		case CMD_MOTOR_SET_PWM:{
+			printf("Motor Set Power\n");
+
+ 			uint8_t rxMsgSize = 5;
+ 			char rx[rxMsgSize];
+ 			fifo_read(rx, rxMsgSize);
+
+ 			uint8_t wheelNumber;
+ 			float PWM;
+ 			memcpy(&wheelNumber, &rx[0], sizeof(wheelNumber));
+ 			memcpy(&PWM, &rx[1], sizeof(PWM));
+
+ 			motor_setPWM(motorSelect(wheelNumber), PWM);
+ 			break;
+		}
+		case CMD_MOTOR_SET_MODE:{
+			printf("Motor Set Mode\n");
+
+			uint8_t rxMsgSize = 2;
+			char rx[rxMsgSize];
+			fifo_read(rx, rxMsgSize);
+
+			uint8_t wheelNumber;
+			uint8_t mode;
+			memcpy(&wheelNumber, &rx[0], sizeof(wheelNumber));
+			memcpy(&mode, &rx[1], sizeof(mode));
+
+			motor_setMode(motorSelect(wheelNumber), mode);
+			break;
+		}
+		//IPC Motor Get Functions
+ 		//CMD_MOTOR_GET_VELOCITY_PID
+		case CMD_MOTOR_GET_POS:{
+			printf("Motor Get Position \n");
+
+			uint8_t rxMsgSize = 1;
+			char rx[rxMsgSize];
+			fifo_read(rx, rxMsgSize);
+
+			uint8_t wheelNumber;
+			memcpy(&wheelNumber, &rx[0], sizeof(wheelNumber));
+
+			int32_t pos = motor_getPos(motorSelect(wheelNumber));
+
+			//Send Message
+			uint8_t txMsgSize = 1;
+			char tx[txMsgSize];
+			memcpy(&tx[0], &pos, sizeof(pos));
+
+        	fifo_write(tx, sizeof(tx));
+			break;
+		}
+		case CMD_MOTOR_GET_RPM:{
+			printf("Motor Get RPM \n");
+
+			uint8_t rxMsgSize = 1;
+			char rx[rxMsgSize];
+			fifo_read(rx, rxMsgSize);
+
+			uint8_t wheelNumber;
+			memcpy(&wheelNumber, &rx[0], sizeof(wheelNumber));
+
+			float rpm = motor_getSpeed(motorSelect(wheelNumber));
+
+			//Send Message
+			uint8_t txMsgSize = 1;
+			char tx[txMsgSize];
+			memcpy(&tx[0], &rpm, sizeof(rpm));
+
+        	fifo_write(tx, sizeof(tx));
+			break;
+		}
+		case CMD_MOTOR_GET_PWM:{
+			printf("Motor Get PWM \n");
+
+			uint8_t rxMsgSize = 1;
+			char rx[rxMsgSize];
+			fifo_read(rx, rxMsgSize);
+
+			uint8_t wheelNumber;
+			memcpy(&wheelNumber, &rx[0], sizeof(wheelNumber));
+
+			float PWM = motor_getPWM(motorSelect(wheelNumber));
+
+			//Send Message
+			uint8_t txMsgSize = 1;
+			char tx[txMsgSize];
+			memcpy(&tx[0], &PWM, sizeof(PWM));
+
+        	fifo_write(tx, sizeof(tx));
+			break;
+		}
+		case CMD_MOTOR_GET_REF_RPM:{
+			printf("Motor Get Ref RPM \n");
+
+			uint8_t rxMsgSize = 1;
+			char rx[rxMsgSize];
+			fifo_read(rx, rxMsgSize);
+
+			uint8_t wheelNumber;
+			memcpy(&wheelNumber, &rx[0], sizeof(wheelNumber));
+
+			float refRPM = motor_getRefSpeed(motorSelect(wheelNumber));
+
+			//Send Message
+			uint8_t txMsgSize = 1;
+			char tx[txMsgSize];
+			memcpy(&tx[0], &refRPM, sizeof(refRPM));
+
+        	fifo_write(tx, sizeof(tx));
+			break;
+		}
+
+		case CMD_MOTOR_GET_I2C_ADDR:{
+			printf("Motor Get I2C Addr \n");
+
+			uint8_t rxMsgSize = 1;
+			char rx[rxMsgSize];
+			fifo_read(rx, rxMsgSize);
+
+			uint8_t wheelNumber;
+			memcpy(&wheelNumber, &rx[0], sizeof(wheelNumber));
+
+			uint16_t i2cAddr = motor_getAddr(motorSelect(wheelNumber));
+
+			//Send Message
+			uint8_t txMsgSize = 2;
+			char tx[txMsgSize];
+			memcpy(&tx[0], &i2cAddr, sizeof(i2cAddr));
+
+        	fifo_write(tx, sizeof(tx));
+			break;
+		}
+        //IPC Base Set functions
         case CMD_BASE_RESET:{
         	printf("Reset Base \n");
         	base_reset(&mecanumBase);
@@ -97,29 +304,8 @@ int IPCParser(char* IPCMSG){
         	memcpy(&PIDparams[1], &rx[5], sizeof(float));
         	memcpy(&PIDparams[2], &rx[9], sizeof(float));
 
-        	switch(wheelNumber){
-        		//Front Left Wheel
-        		case 0:{
-        			motor_setPID(mecanumBase.frontLeftWheel, PIDparams[0], PIDparams[1], PIDparams[2]);
-        			break;
-        		}
-        		//Front Right Wheel
-        		case 1:{
-        			motor_setPID(mecanumBase.frontRightWheel, PIDparams[0], PIDparams[1], PIDparams[2]);
-        			break;
-        		}
-        		//Rear Left Wheel
-        		case 2:{
-        			motor_setPID(mecanumBase.rearLeftWheel, PIDparams[0], PIDparams[1], PIDparams[2]);
-        			break;
-        		}
-        		//Rear Right Wheel
-        		case 3:{
-        			motor_setPID(mecanumBase.rearRightWheel, PIDparams[0], PIDparams[1], PIDparams[2]);
-        			break;
-        		}
-        	}
-
+        	Motor m = motorSelect(wheelNumber);
+        	motor_setPID(m, PIDparams[0], PIDparams[1], PIDparams[2]);
             break;
         }
         case CMD_BASE_SET_POSITION_PID:{
@@ -129,13 +315,13 @@ int IPCParser(char* IPCMSG){
             break;
         }
 
-        //IPC Get Functions
+        //IPC Base Get Functions
         case CMD_BASE_GET_CTRL_MODE:{
         	printf("Get Control Mode \n");
         	uint8_t txMsgSize = 1;
             char tx[txMsgSize];
             memcpy(&tx[0], &mecanumBase.controlMode, sizeof(mecanumBase.controlMode));
-            
+
             fifo_write(tx, sizeof(tx));
             break;
         }
@@ -183,61 +369,18 @@ int IPCParser(char* IPCMSG){
 		    fifo_read(rx, rxMsgSize);
 		    uint8_t wheelNumber;
 		    memcpy(&wheelNumber, &rx[0], sizeof(wheelNumber));
+		    
+		    Motor m = motorSelect(wheelNumber);
+		    float PIDparams[3];
+    		motor_getPID(m, &PIDparams[0], &PIDparams[1], &PIDparams[2]);
 		    //Send Message
-		    switch (wheelNumber){
-		    	case 0:{
-		    		float PIDparams[3];
-		    		motor_getPID(mecanumBase.frontLeftWheel, &PIDparams[0], &PIDparams[1], &PIDparams[2]);
+		    uint8_t txMsgSize = 12;
+			char tx[txMsgSize];
+			memcpy(&tx[0], &PIDparams[0], sizeof(float));
+			memcpy(&tx[4], &PIDparams[1], sizeof(float));
+			memcpy(&tx[8], &PIDparams[2], sizeof(float));
 
-		    		uint8_t txMsgSize = 12;
-        			char tx[txMsgSize];
-        			memcpy(&tx[0], &PIDparams[0], sizeof(float));
-        			memcpy(&tx[4], &PIDparams[1], sizeof(float));
-        			memcpy(&tx[8], &PIDparams[2], sizeof(float));
-
-                	fifo_write(tx, sizeof(tx));
-		    		break;
-		    	}
-		    	case 1:{
-		    		float PIDparams[3];
-		    		motor_getPID(mecanumBase.frontRightWheel, &PIDparams[0], &PIDparams[1], &PIDparams[2]);
-
-		    		uint8_t txMsgSize = 12;
-        			char tx[txMsgSize];
-        			memcpy(&tx[0], &PIDparams[0], sizeof(float));
-        			memcpy(&tx[4], &PIDparams[1], sizeof(float));
-        			memcpy(&tx[8], &PIDparams[2], sizeof(float));
-
-                	fifo_write(tx, sizeof(tx));
-		    		break;
-		    	}
-		    	case 2:{
-		    		float PIDparams[3];
-		    		motor_getPID(mecanumBase.rearLeftWheel, &PIDparams[0], &PIDparams[1], &PIDparams[2]);
-
-		    		uint8_t txMsgSize = 12;
-        			char tx[txMsgSize];
-        			memcpy(&tx[0], &PIDparams[0], sizeof(float));
-        			memcpy(&tx[4], &PIDparams[1], sizeof(float));
-        			memcpy(&tx[8], &PIDparams[2], sizeof(float));
-
-                	fifo_write(tx, sizeof(tx));
-		    		break;
-		    	}
-		    	case 3:{
-		    		float PIDparams[3];
-		    		motor_getPID(mecanumBase.rearRightWheel, &PIDparams[0], &PIDparams[1], &PIDparams[2]);
-
-		    		uint8_t txMsgSize = 12;
-        			char tx[txMsgSize];
-        			memcpy(&tx[0], &PIDparams[0], sizeof(float));
-        			memcpy(&tx[4], &PIDparams[1], sizeof(float));
-        			memcpy(&tx[8], &PIDparams[2], sizeof(float));
-
-                	fifo_write(tx, sizeof(tx));
-		    		break;
-		    	}
-		    }
+        	fifo_write(tx, sizeof(tx));
             break;
         }
         case CMD_BASE_GET_POSITION_PID:{

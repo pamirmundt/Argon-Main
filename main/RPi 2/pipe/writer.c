@@ -23,6 +23,20 @@ base_get_velocity
 base_get_position
 */
 
+//Motor Set CMDs
+#define CMD_MOTOR_RESET             0x10
+#define CMD_MOTOR_SET_RPM           0x11
+#define CMD_MOTOR_SET_VELOCITY_PID  0x12
+#define CMD_MOTOR_SET_POWER         0x13
+#define CMD_MOTOR_SET_PWM           0x14
+#define CMD_MOTOR_SET_MODE          0x15
+//Motor Get CMDs
+#define CMD_MOTOR_GET_VELOCITY_PID  0x20
+#define CMD_MOTOR_GET_POS           0x21
+#define CMD_MOTOR_GET_RPM           0x22
+#define CMD_MOTOR_GET_PWM           0x23
+#define CMD_MOTOR_GET_REF_RPM       0x24
+#define CMD_MOTOR_GET_I2C_ADDR      0x25
 //Base Set CMDs
 #define CMD_BASE_RESET              0x30
 #define CMD_BASE_SET_VELOCITY       0x31
@@ -61,6 +75,27 @@ int fifo_read(char rx[], uint8_t size){
         return -1;
     }
     return 0;
+}
+
+int motor_reset(uint8_t motorNumber){
+    //Send CMD
+    char cmd[1] = {CMD_MOTOR_RESET};
+    fifo_write(cmd, 1);
+    //Send message
+    char tx[1] = {motorNumber};
+    return(fifo_write(tx, 1));
+}
+
+int motor_set_RPM(uint8_t motorNumber, float RPM){
+    //Send CMD
+    char cmd[1] = {CMD_MOTOR_SET_RPM};
+    fifo_write(cmd, 1);
+    //Send message
+    uint8_t msgSize = 5;
+    char tx[msgSize];
+    memcpy(&tx[0], &motorNumber, sizeof(motorNumber));
+    memcpy(&tx[1], &RPM, sizeof(RPM));
+    return(fifo_write(tx, msgSize));
 }
 
 int base_reset(){
@@ -204,19 +239,20 @@ int main()
     fd = open(inputFifo, O_RDWR);
     fd2 = open(outputFifo, O_RDWR);
 
-    base_set_ctrl_mode(0x02);
+    base_set_ctrl_mode(0x01);
     //base_set_velocity(0.1f, 0.0f, 0.0f);
     //base_reset();
 
     while(1){
-        float sp[3] ={0};
-        base_get_position(&sp[0], &sp[1], &sp[2]);
-        printf("%f %f %f \n", sp[0], sp[1], sp[2]);
-        //base_set_velocity_PID(3, 10.0f, 0.0f, 0.0f);
+        //float sp[3] ={0};
+        //base_get_position(&sp[0], &sp[1], &sp[2]);
+        //printf("%f %f %f \n", sp[0], sp[1], sp[2]);
+        //base_set_velocity_PID(3, 5.0f, 0.0f, 0.0f);
         //float Kp, Ki, Kd;
-        //base_get_velocity_PID(0, &Kp, &Ki, &Kd);
-        
-        usleep(100000);
+        //base_get_velocity_PID(3, &Kp, &Ki, &Kd);
+        //printf("%f %f %f\n", Kp, Ki, Kd);
+        motor_set_RPM(3, 10);
+        usleep(200000);
     }
 
     close(fd);
