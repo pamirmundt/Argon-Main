@@ -147,7 +147,7 @@ int main(){
     //0: Manuel Mode
     //1: Velocity Control Mode (Default)
     //2: Position Control Mode
-    base_setControlMode(&mecanumBase, 0x02);
+    base_setControlMode(&mecanumBase, 0x01);
 
     //Initialize clock for nanosecond intervals
     struct timespec ts;

@@ -49,7 +49,7 @@ int open_Port(int devId){
 	return fd;
 }
 
-inline int i2cMasterTransmit(uint16_t addr){
+int i2cMasterTransmit(uint16_t addr){
 	
 	open_Port(addr);
 
@@ -62,7 +62,7 @@ inline int i2cMasterTransmit(uint16_t addr){
 	return 0;
 }
 
-inline int i2cMasterReceive(uint16_t addr){
+int i2cMasterReceive(uint16_t addr){
 
 	open_Port(addr);
 

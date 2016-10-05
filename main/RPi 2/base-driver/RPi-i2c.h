@@ -17,7 +17,7 @@ uint8_t i2cTXBuffer[TXBUFFERSIZE];
 int init_I2C(void);
 int open_Port(int devId);
 int terminate_I2C(void);
-inline int i2cMasterTransmit(uint16_t addr);
-inline int i2cMasterReceive(uint16_t addr);
+int i2cMasterTransmit(uint16_t addr);
+int i2cMasterReceive(uint16_t addr);
 
 #endif

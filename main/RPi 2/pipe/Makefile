@@ -1,2 +1,2 @@
 all:
-	gcc -Wall -O3 writer.c -o writer.o
+	gcc -std=gnu99 -Wall -O3 writer.c -o writer.o
