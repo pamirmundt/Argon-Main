@@ -145,9 +145,10 @@ int main(){
     //Default Control Mode: Velocity Control
     //Control Modes
     //0: Manuel Mode
-    //1: Velocity Control Mode (Default)
-    //2: Position Control Mode
-    base_setControlMode(&mecanumBase, 0x01);
+    //1: Wheel Velocity Control Mode
+    //2: Base Velocity Control Mode (Default)
+    //3: Position Control Mode
+    base_setControlMode(&mecanumBase, 0x02);
 
     //Initialize clock for nanosecond intervals
     struct timespec ts;
@@ -268,9 +269,9 @@ int main(){
                 base_getVelocity(pArgs_wheelVelocitiesToCartesianVelocity, pFunc_wheelVelocitiesToCartesianVelocity, &mecanumBase);
                 
                 //********************************************************************************
-                // Velocity Control Mode: 0x01
+                // Base Velocity Control Mode: 0x02
                 //********************************************************************************
-                if(mecanumBase.controlMode == 0x01){
+                if(mecanumBase.controlMode == 0x02){
                     base_setVelocity(pArgs_cartesianVelocityToWheelVelocities, pFunc_cartesianVelocityToWheelVelocities, mecanumBase, mecanumBase.refLongitudinalVelocity, mecanumBase.refTransversalVelocity, mecanumBase.refAngularVelocity);
                 }
                 //********************************************************************************
@@ -278,9 +279,9 @@ int main(){
 
 
                 //********************************************************************************
-                // Position Control Mode: 0x02
+                // Base Position Control Mode: 0x02
                 //********************************************************************************
-                if(mecanumBase.controlMode == 0x02){
+                if(mecanumBase.controlMode == 0x03){
                     pyCalcPID(pCalcPIDArgs, pCalcPIDFunc);
 
                     base_calcWheelTorques(pArgs_calcJacobianT, pFunc_calcJacobianT, &mecanumBase);

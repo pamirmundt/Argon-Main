@@ -124,7 +124,7 @@ void base_setControlMode(Base* myBase, uint8_t mode){
 			break;
 		
 		//Velocity Mode
-		case 0x01:
+		case (0x01 || 0x02):
 			motor_reset(myBase->frontLeftWheel);
 			motor_reset(myBase->frontRightWheel);
 			motor_reset(myBase->rearLeftWheel);
@@ -136,7 +136,7 @@ void base_setControlMode(Base* myBase, uint8_t mode){
 			motor_setMode(myBase->rearRightWheel, 1);
 			break;
 		
-		case 0x02:
+		case 0x03:
 			//Enable Velocity Mode
 			motor_setMode(myBase->frontLeftWheel, 1);
 			motor_setMode(myBase->frontRightWheel, 1);
