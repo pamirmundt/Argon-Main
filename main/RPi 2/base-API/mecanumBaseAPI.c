@@ -1,11 +1,14 @@
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <stdio.h>
+#include "mecanumBaseAPI.h"
+
+#include <stdlib.h>     //exit()
+#include <fcntl.h>      //open()
+//#include <sys/stat.h>
+//#include <sys/types.h>
+#include <unistd.h>     //write()/read()
+#include <stdio.h>      //printf
 #include <string.h>
-#include <stdint.h>
 #include <errno.h>
+#include <math.h>       //NAN
 
 //Motor Set CMDs
 #define CMD_MOTOR_RESET             0x10
@@ -39,7 +42,26 @@ int fd, fd2;
 char * inputFifo = "/tmp/mecanumBaseDriverInput";
 char * outputFifo = "/tmp/mecanumBaseDriverOutput";
 
+void mecanumBaseAPI(){
+    if((fd = open(inputFifo, O_RDWR)) < 0){
+        printf("Failed to open FIFO special file: %s \n", strerror(errno));
+        printf("Make sure base-driver is working! \n");
+        exit(0);
+    }
 
+    if((fd2 = open(outputFifo, O_RDWR)) < 0){
+        printf("Failed to open FIFO special file: %s \n", strerror(errno));
+        printf("Make sure base-driver is working! \n");
+        exit(0);
+    }
+}
+
+void mecanumBaseAPI_Finalize(){
+    if(close(fd) < 0)
+        printf("Failed to close FIFO special file: %s \n", strerror(errno));
+    if(close(fd2) < 0)
+        printf("Failed to close FIFO special file: %s \n", strerror(errno));
+}
 
 int fifo_write(char tx[], uint8_t size){
     if(write(fd, tx, size) < 0){
@@ -60,6 +82,8 @@ int fifo_read(char rx[], uint8_t size){
     }
     return 0;
 }
+
+
 //**************************
 //  IPC Motor Set Functions
 //**************************
@@ -116,7 +140,6 @@ int motor_set_power(uint8_t wheelNumber, float power){
     return (fifo_write(tx, msgSize));
 }
 
-//0-2047
 int motor_set_pwm(uint8_t wheelNumber, float PWM){
     char cmd[1] = {CMD_MOTOR_SET_PWM};
     if(fifo_write(cmd, 1) < 0)
@@ -144,10 +167,11 @@ int motor_set_ctrl_mode(uint8_t wheelNumber, uint8_t mode){
 
     return (fifo_write(tx, msgSize));
 }
+
 //**************************
 //  IPC Motor Get Functions
 //**************************
-int motor_get_velocity_pid(uint8_t wheelNumber, float * Kp, float * Ki, float * Kd){
+float motor_get_velocity_pid(uint8_t wheelNumber, float * Kp, float * Ki, float * Kd){
     //Send CMD
     char cmd[1] = {CMD_MOTOR_GET_VELOCITY_PID};
     if(fifo_write(cmd, 1) < 0)
@@ -170,7 +194,7 @@ int motor_get_velocity_pid(uint8_t wheelNumber, float * Kp, float * Ki, float * 
     return 0;
 }
 
-int motor_get_pos(uint8_t wheelNumber, int32_t * motorPosition){
+int32_t motor_get_pos(uint8_t wheelNumber){
     //Send CMD
     char cmd[1] = {CMD_MOTOR_GET_POS};
     if(fifo_write(cmd, 1) < 0)
@@ -187,53 +211,56 @@ int motor_get_pos(uint8_t wheelNumber, int32_t * motorPosition){
     if(fifo_read(rx, rxMsgSize) < 0)
         return -1;
 
-    memcpy(motorPosition, &rx[0], sizeof(int32_t));
-    return 0;
+    int32_t motorPosition;
+    memcpy(&motorPosition, &rx[0], sizeof(int32_t));
+    return motorPosition;
 }
 
-int motor_get_RPM(uint8_t wheelNumber, float * RPM){
+float motor_get_RPM(uint8_t wheelNumber){
     //Send CMD
     char cmd[1] = {CMD_MOTOR_GET_RPM};
     if(fifo_write(cmd, 1) < 0)
-        return -1;
+        return NAN;
     //Send Message (Wheel Number)
     uint8_t txMsgSize = 1;
     char tx[txMsgSize];
     memcpy(&tx[0], &wheelNumber, sizeof(wheelNumber));
     if(fifo_write(tx, txMsgSize) < 0)
-        return -1;
+        return NAN;
     //Read Message (PID Values)
     uint8_t rxMsgSize = 4;
     char rx[rxMsgSize];
     if(fifo_read(rx, rxMsgSize) < 0)
-        return -1;
+        return NAN;
 
-    memcpy(RPM, &rx[0], sizeof(int32_t));
-    return 0;
+    float RPM;
+    memcpy(&RPM, &rx[0], sizeof(float));
+    return RPM;
 }
 
-int motor_get_ref_RPM(uint8_t wheelNumber, float * refRPM){
+float motor_get_ref_RPM(uint8_t wheelNumber){
     //Send CMD
     char cmd[1] = {CMD_MOTOR_GET_REF_RPM};
     if(fifo_write(cmd, 1) < 0)
-        return -1;
+        return NAN;
     //Send Message (Wheel Number)
     uint8_t txMsgSize = 1;
     char tx[txMsgSize];
     memcpy(&tx[0], &wheelNumber, sizeof(wheelNumber));
     if(fifo_write(tx, txMsgSize) < 0)
-        return -1;
+        return NAN;
     //Read Message (PID Values)
     uint8_t rxMsgSize = 4;
     char rx[rxMsgSize];
     if(fifo_read(rx, rxMsgSize) < 0)
-        return -1;
+        return NAN;
 
-    memcpy(refRPM, &rx[0], sizeof(int32_t));
-    return 0;
+    float refRPM;
+    memcpy(&refRPM, &rx[0], sizeof(float));
+    return refRPM;
 }
 
-int motor_get_i2c_addr(uint8_t wheelNumber, uint16_t * i2cAddr){
+int motor_get_i2c_addr(uint8_t wheelNumber){
     //Send CMD
     char cmd[1] = {CMD_MOTOR_GET_I2C_ADDR};
     if(fifo_write(cmd, 1) < 0)
@@ -250,8 +277,9 @@ int motor_get_i2c_addr(uint8_t wheelNumber, uint16_t * i2cAddr){
     if(fifo_read(rx, rxMsgSize) < 0)
         return -1;
 
-    memcpy(i2cAddr, &rx[0], sizeof(uint16_t));
-    return 0;
+    uint16_t i2cAddr;
+    memcpy(&i2cAddr, &rx[0], sizeof(uint16_t));
+    return i2cAddr;
 }
 
 //**************************
@@ -306,7 +334,10 @@ int base_set_velocity_PID(uint8_t wheelNumber, float Kp, float Ki, float Kd){
     return (fifo_write(tx, msgSize));
 }
 
-int base_get_ctrl_mode(uint8_t * mode){
+//**************************
+//  IPC Base Get Functions
+//**************************
+uint8_t base_get_ctrl_mode(){
     //Send CMD
     char cmd[1] = {CMD_BASE_GET_CTRL_MODE};
     if(fifo_write(cmd, 1) < 0)
@@ -316,8 +347,9 @@ int base_get_ctrl_mode(uint8_t * mode){
     char rx[msgSize];
     if(fifo_read(rx, msgSize) < 0)
         return -1;
-    memcpy(mode, &rx[0], sizeof(uint8_t));
-    return 0;   
+    uint8_t mode;
+    memcpy(&mode, &rx[0], sizeof(uint8_t));
+    return mode;   
 }
 
 int base_get_velocity(float * longitudinalVelocity, float * transversalVelocity, float * angularVelocity){
@@ -351,7 +383,6 @@ int base_get_ref_velocity(float * refLongitudinalVelocity, float * refTransversa
     memcpy(refAngularVelocity, &rx[8], sizeof(float));
     return 0;
 }
-
 
 int base_get_position(float * longitudinalPosition, float * transversalPosition, float * angularPosition){
     //Send CMD
@@ -389,51 +420,5 @@ int base_get_velocity_PID(uint8_t wheelNumber, float * Kp, float * Ki, float * K
     memcpy(Kp, &rx[0], sizeof(float));
     memcpy(Ki, &rx[4], sizeof(float));
     memcpy(Kd, &rx[8], sizeof(float));
-    return 0;
-}
-
-int main()
-{
-
-    fd = open(inputFifo, O_RDWR);
-    fd2 = open(outputFifo, O_RDWR);
-
-    base_reset();
-    usleep(200000);
-    base_set_ctrl_mode(0x02);
-    base_set_velocity(0.1f, 0.1f, 0.1f);
-    //base_reset();
-
-    while(1){
-        //float sp[3] ={0};
-        //base_get_position(&sp[0], &sp[1], &sp[2]);
-        //printf("%f %f %f \n", sp[0], sp[1], sp[2]);
-        //base_set_velocity_PID(3, 5.0f, 0.0f, 0.0f);
-        //float Kp, Ki, Kd;
-        //base_get_velocity_PID(3, &Kp, &Ki, &Kd);
-        //printf("%f %f %f\n", Kp, Ki, Kd);
-        //motor_set_RPM(0, 10);
-        //motor_set_RPM(1, -10);
-        //motor_set_RPM(2, -10);
-        //motor_set_RPM(3, 10);
-        //motor_set_ctrl_mode(3, 1);
-        //int32_t pos;
-        //motor_get_pos(3, &pos);
-        //float RPM1, RPM2;
-        //motor_get_ref_RPM(2, &RPM1);
-        //motor_get_ref_RPM(1, &RPM2);
-        //printf("%f \n", RPM1);
-        
-        int16_t addr;
-        motor_get_i2c_addr(1, &addr);
-
-        printf("%d\n", addr);
-
-        usleep(200000);
-    }
-
-    close(fd);
-    close(fd2);
-
     return 0;
 }

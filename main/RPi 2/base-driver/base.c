@@ -98,9 +98,10 @@ void base_getPosition(Base* myBase, float positions[]){
 }
 
 //	@brief  Base Set Control Mode
-//			- Mode: 0 - Manuel Mode
-//			- Mode: 1 - Velocity Mode
-//			- Mode: 2 - Position Mode
+//	0: Manuel Mode
+//	1: Wheel Velocity Control Mode
+//	2: Base Velocity Control Mode (Default)
+//	3: Position Control Mode
 //	@param Base
 //	@param mode
 //	@retval None
