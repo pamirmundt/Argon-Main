@@ -84,6 +84,7 @@ volatile float RPM_CH2 = 0.0f;
 volatile float RPM_CH3 = 0.0f;
 volatile float RPM_CH4 = 0.0f;
 
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -154,10 +155,10 @@ int main(void)
 	HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_3);
 	HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_4);
 	
-	//HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_1);
-	//HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_2);
-	//HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_3);
-	//HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_4);
+	HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_1);
+	HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_2);
+	HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_3);
+	HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_4);
 	
 	HAL_TIM_Base_Start_IT(&htim15);
 
@@ -631,88 +632,59 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
-void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
-{
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
+	
 	if(htim->Instance == TIM2){
 		
-		if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1){			
+		//Timer 2 - Channel 1
+		if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1){
 			encoder_count_CH1++;
 			
 			uint16_t input_capture_TIM2_CH1 = HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_1);	//read TIM2 channel 1 capture value
 			delta_clk_TIM2_CH1 = input_capture_TIM2_CH1 - prev_capture_TIM2_CH1;
 			prev_capture_TIM2_CH1 = input_capture_TIM2_CH1;
-			
-			//Max velocity for Delta Time
-			//Count Limit(timer count) = 64Mhz / 1000Prescale / 200Hz (Velocity calculation loop)
-			//320 = 64Mhz / 1000 / 200Hz
-			if(delta_clk_TIM2_CH1 >= 320){
-				//RPM = 60Sec / ( 64Enc * Delta_time)
-				//Delta_time(seconds) = delta_count / (64Mhz / 1000Prescale)
-				RPM_CH1 = 60000.0f/(float)delta_clk_TIM2_CH1;	
-			}
 		}
 		
+		//Timer 2 - Channel 2
 		else if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_2){
 			encoder_count_CH2++;
 			
 			uint16_t input_capture_TIM2_CH2 = HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_2);	//read TIM2 channel 2 capture value
 			delta_clk_TIM2_CH2 = input_capture_TIM2_CH2 - prev_capture_TIM2_CH2;
 			prev_capture_TIM2_CH2 = input_capture_TIM2_CH2;
-			
-			//Max velocity for Delta Time
-			//Count Limit(timer count) = 64Mhz / 1000Prescale / 200Hz (Velocity calculation loop)
-			//320 = 64Mhz / 1000 / 200Hz
-			if(delta_clk_TIM2_CH2 >= 320){
-				//RPM = 60Sec / ( 64Enc * Delta_time)
-				//Delta_time(seconds) = delta_count / (64Mhz / 1000Prescale)
-				RPM_CH2 = 60000.0f/(float)delta_clk_TIM2_CH2;
-			}
 		}
 		
+		//Timer 2 - Channel 3
 		else if(htim->Channel == HAL_TIM_ACTIVE_CHANNEL_3){
 			encoder_count_CH3++;
 			
 			uint16_t input_capture_TIM2_CH3 = HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_3);	//read TIM2 channel 3 capture value
 			delta_clk_TIM2_CH3 = input_capture_TIM2_CH3 - prev_capture_TIM2_CH3;
 			prev_capture_TIM2_CH3 = input_capture_TIM2_CH3;
-			
-			//Max velocity for Delta Time
-			//Count Limit(timer count) = 64Mhz / 1000Prescale / 200Hz (Velocity calculation loop)
-			//320 = 64Mhz / 1000 / 200Hz
-			if(delta_clk_TIM2_CH3 >= 320){
-				//RPM = 60Sec / ( 64Enc * Delta_time)
-				//Delta_time(seconds) = delta_count / (64Mhz / 1000Prescale)
-				RPM_CH3 = 60000.0f/(float)delta_clk_TIM2_CH3;
-			}
 		}
 		
+		//Timer 2 - Channel 4
 		else if(htim->Channel == HAL_TIM_ACTIVE_CHANNEL_4){
 			encoder_count_CH4++;
 			
 			uint16_t input_capture_TIM2_CH4 = HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_4);	//read TIM2 channel 4 capture value
 			delta_clk_TIM2_CH4 = input_capture_TIM2_CH4 - prev_capture_TIM2_CH4;
 			prev_capture_TIM2_CH4 = input_capture_TIM2_CH4;
-			
-			//Max velocity for Delta Time
-			//Count Limit(timer count) = 64Mhz / 1000Prescale / 200Hz (Velocity calculation loop)
-			//320 = 64Mhz / 1000 / 200Hz
-			if(delta_clk_TIM2_CH4 >= 320){
-				//RPM = 60Sec / ( 64Enc * Delta_time)
-				//Delta_time(seconds) = delta_count / (64Mhz / 1000Prescale)
-				RPM_CH4 = 60000.0f/(float)delta_clk_TIM2_CH4;
-			}
 		}
 	}
+	
 	else if(htim->Instance == TIM3){
-		
+		//Timer 3 - Channel 1
 		if(htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1){
 			encoder_count_CH1--;
 			
 			uint16_t input_capture_TIM3_CH1 = HAL_TIM_ReadCapturedValue(&htim3, TIM_CHANNEL_1);	//read TIM3 channel 1 capture value
 			delta_clk_TIM3_CH1 = input_capture_TIM3_CH1 - prev_capture_TIM3_CH1;
 			prev_capture_TIM3_CH1 = input_capture_TIM3_CH1;
+			
 		}
 		
+		//Timer 3 - Channel 2
 		else if(htim->Channel == HAL_TIM_ACTIVE_CHANNEL_2){
 			encoder_count_CH2--;
 			
@@ -721,6 +693,7 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 			prev_capture_TIM3_CH2 = input_capture_TIM3_CH2;
 		}
 		
+		//Timer 3 - Channel 3
 		else if(htim->Channel == HAL_TIM_ACTIVE_CHANNEL_3){
 			encoder_count_CH3--;
 			
@@ -729,6 +702,7 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 			prev_capture_TIM3_CH3 = input_capture_TIM3_CH3;
 		}
 		
+		//Timer 3 - Channel 4
 		else if(htim->Channel == HAL_TIM_ACTIVE_CHANNEL_4){
 			encoder_count_CH4--;
 			
@@ -741,39 +715,104 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
+	
 	if(htim->Instance == TIM15)
 	{
-		//Channel 1 RPM
+		//---------------------------------
+		//	Channel 1 RPM
+		//---------------------------------
 		int16_t delta_encoder_CH1 = encoder_count_CH1 - prev_encoder_count_CH1;
 		prev_encoder_count_CH1 = encoder_count_CH1;
 		
-		if(delta_clk_TIM2_CH1 < 320){
-			RPM_CH1 = 187.5f*((float)delta_encoder_CH1);
+		//Max velocity for Delta Time
+		//Count Limit(timer count) = 64Mhz / 1000Prescale / 200Hz (Velocity calculation loop)
+		//320 = 64Mhz / 1000 / 200Hz
+		//Timer 2 - Channel 1
+		if(delta_clk_TIM2_CH1 >= 320){
+			//RPM = 60Sec / ( 64Enc * Delta_time)
+			//Delta_time(seconds) = delta_count / (64Mhz / 1000Prescale)
+			RPM_CH1 = 60000.0f/(float)delta_clk_TIM2_CH1;	
 		}
+		//Timer 3 - Channel 1
+		else if(delta_clk_TIM3_CH1 >= 320){
+				//RPM = 60Sec / ( 64Enc * Delta_time)
+				//Delta_time(seconds) = delta_count / (64Mhz / 1000Prescale)
+				RPM_CH1 = -60000.0f/(float)delta_clk_TIM3_CH1;
+		}
+		else if((delta_clk_TIM2_CH1 < 320) && (delta_clk_TIM3_CH1 < 320))
+			RPM_CH1 = 187.5f*((float)delta_encoder_CH1);
 		
-		//Channel 2 RPM
+		
+		//---------------------------------
+		//	Channel 2 RPM
+		//---------------------------------
 		int16_t delta_encoder_CH2 = encoder_count_CH2 - prev_encoder_count_CH2;
 		prev_encoder_count_CH2 = encoder_count_CH2;
 		
-		if(delta_clk_TIM2_CH2 < 320){
-			RPM_CH2 = 187.5f*((float)delta_encoder_CH2);
+		//Max velocity for Delta Time
+		//Count Limit(timer count) = 64Mhz / 1000Prescale / 200Hz (Velocity calculation loop)
+		//320 = 64Mhz / 1000 / 200Hz
+		//Timer 2 - Channel 2
+		if(delta_clk_TIM2_CH2 >= 320){
+			//RPM = 60Sec / ( 64Enc * Delta_time)
+			//Delta_time(seconds) = delta_count / (64Mhz / 1000Prescale)
+			RPM_CH2 = 60000.0f/(float)delta_clk_TIM2_CH2;
 		}
+		//Timer 3 - Channes 3
+		else if(delta_clk_TIM3_CH2 >= 320){
+			//RPM = 60Sec / ( 64Enc * Delta_time)
+			//Delta_time(seconds) = delta_count / (64Mhz / 1000Prescale)
+			RPM_CH2 = -60000.0f/(float)delta_clk_TIM3_CH2;
+		}
+		else if((delta_clk_TIM2_CH2 < 320) && (delta_clk_TIM3_CH2 < 320))
+			RPM_CH2 = 187.5f*((float)delta_encoder_CH2);
 		
-		//Channel 3 RPM
+		//---------------------------------
+		//	Channel 3 RPM
+		//---------------------------------
 		int16_t delta_encoder_CH3 = encoder_count_CH3 - prev_encoder_count_CH3;
 		prev_encoder_count_CH3 = encoder_count_CH3;
 		
-		if(delta_clk_TIM2_CH3 < 320){
-			RPM_CH3 = 187.5f*((float)delta_encoder_CH3);
+		//Max velocity for Delta Time
+		//Count Limit(timer count) = 64Mhz / 1000Prescale / 200Hz (Velocity calculation loop)
+		//320 = 64Mhz / 1000 / 200Hz
+		//Timer 2 - Channel 3
+		if(delta_clk_TIM2_CH3 >= 320){
+			//RPM = 60Sec / ( 64Enc * Delta_time)
+			//Delta_time(seconds) = delta_count / (64Mhz / 1000Prescale)
+			RPM_CH3 = 60000.0f/(float)delta_clk_TIM2_CH3;
 		}
+		//Timer 3 - Channel 3
+		else if(delta_clk_TIM3_CH3 >= 320){
+			//RPM = 60Sec / ( 64Enc * Delta_time)
+			//Delta_time(seconds) = delta_count / (64Mhz / 1000Prescale)
+			RPM_CH3 = -60000.0f/(float)delta_clk_TIM3_CH3;
+		}
+		else if((delta_clk_TIM2_CH3 < 320) && (delta_clk_TIM3_CH3 < 320))
+			RPM_CH3 = 187.5f*((float)delta_encoder_CH3);
 		
-		//Channel 4 RPM
+		
+		//---------------------------------
+		//	Channel 4 RPM
+		//---------------------------------
 		int16_t delta_encoder_CH4 = encoder_count_CH4 - prev_encoder_count_CH4;
 		prev_encoder_count_CH4 = encoder_count_CH4;
 		
-		if(delta_clk_TIM2_CH4 < 320){
-			RPM_CH4 = 187.5f*((float)delta_encoder_CH4);
+		//Max velocity for Delta Time
+		//Count Limit(timer count) = 64Mhz / 1000Prescale / 200Hz (Velocity calculation loop)
+		//320 = 64Mhz / 1000 / 200Hz
+		if(delta_clk_TIM2_CH4 >= 320){
+			//RPM = 60Sec / ( 64Enc * Delta_time)
+			//Delta_time(seconds) = delta_count / (64Mhz / 1000Prescale)
+			RPM_CH4 = 60000.0f/(float)delta_clk_TIM2_CH4;
 		}
+		else if(delta_clk_TIM3_CH4 >= 320){
+			//RPM = 60Sec / ( 64Enc * Delta_time)
+			//Delta_time(seconds) = delta_count / (64Mhz / 1000Prescale)
+			RPM_CH4 = -60000.0f/(float)delta_clk_TIM3_CH4;
+		}
+		else if((delta_clk_TIM2_CH4 < 320) && (delta_clk_TIM3_CH4 < 320))
+			RPM_CH4 = 187.5f*((float)delta_encoder_CH4);
 	}
 }
 
