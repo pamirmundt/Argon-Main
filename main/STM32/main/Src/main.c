@@ -84,6 +84,12 @@ volatile float RPM_CH2 = 0.0f;
 volatile float RPM_CH3 = 0.0f;
 volatile float RPM_CH4 = 0.0f;
 
+volatile uint8_t timeout_CH1 = 0;
+volatile uint8_t timeout_CH2 = 0;
+volatile uint8_t timeout_CH3 = 0;
+volatile uint8_t timeout_CH4 = 0;
+
+//volatile uint16_t input_capture_TIM3_CH1 = 0;
 
 /* USER CODE END PV */
 
@@ -633,9 +639,8 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
-	
+	GPIOF->BSRR = GPIO_BSRR_BS_1;
 	if(htim->Instance == TIM2){
-		
 		//Timer 2 - Channel 1
 		if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1){
 			encoder_count_CH1++;
@@ -680,8 +685,7 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
 			
 			uint16_t input_capture_TIM3_CH1 = HAL_TIM_ReadCapturedValue(&htim3, TIM_CHANNEL_1);	//read TIM3 channel 1 capture value
 			delta_clk_TIM3_CH1 = input_capture_TIM3_CH1 - prev_capture_TIM3_CH1;
-			prev_capture_TIM3_CH1 = input_capture_TIM3_CH1;
-			
+			prev_capture_TIM3_CH1 = input_capture_TIM3_CH1;	
 		}
 		
 		//Timer 3 - Channel 2
@@ -711,17 +715,33 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
 			prev_capture_TIM3_CH4 = input_capture_TIM3_CH4;
 		}
 	}
+	GPIOF->BSRR = GPIO_BSRR_BR_1;
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-	
 	if(htim->Instance == TIM15)
 	{
 		//---------------------------------
 		//	Channel 1 RPM
 		//---------------------------------
+		
+		//Timeout for CH1
+		//Checks Encoder Count
+		//if there is not change in encoder count in a 1 sec interval, sets RPM to zero
+		//timeout = 1/(64Mhz / 16000 Prescaler / 20 Counter Period)
+		//timeout = 0.005sec (200Hz)
 		int16_t delta_encoder_CH1 = encoder_count_CH1 - prev_encoder_count_CH1;
+		if(encoder_count_CH1 == prev_encoder_count_CH1){
+			timeout_CH1++;
+			if(timeout_CH1 == 200){
+				delta_clk_TIM2_CH1 = 0;
+				delta_clk_TIM3_CH1 = 0;
+				timeout_CH1 = 0;
+			}
+		}
+		else
+			timeout_CH1 = 0;
 		prev_encoder_count_CH1 = encoder_count_CH1;
 		
 		//Max velocity for Delta Time
@@ -731,13 +751,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		if(delta_clk_TIM2_CH1 >= 320){
 			//RPM = 60Sec / ( 64Enc * Delta_time)
 			//Delta_time(seconds) = delta_count / (64Mhz / 1000Prescale)
-			RPM_CH1 = 60000.0f/(float)delta_clk_TIM2_CH1;	
+			RPM_CH1 = 60000.0f/(float)delta_clk_TIM2_CH1;
 		}
 		//Timer 3 - Channel 1
 		else if(delta_clk_TIM3_CH1 >= 320){
-				//RPM = 60Sec / ( 64Enc * Delta_time)
-				//Delta_time(seconds) = delta_count / (64Mhz / 1000Prescale)
-				RPM_CH1 = -60000.0f/(float)delta_clk_TIM3_CH1;
+			//RPM = 60Sec / ( 64Enc * Delta_time)
+			//Delta_time(seconds) = delta_count / (64Mhz / 1000Prescale)
+			RPM_CH1 = -60000.0f/(float)delta_clk_TIM3_CH1;
 		}
 		else if((delta_clk_TIM2_CH1 < 320) && (delta_clk_TIM3_CH1 < 320))
 			RPM_CH1 = 187.5f*((float)delta_encoder_CH1);
@@ -746,7 +766,23 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		//---------------------------------
 		//	Channel 2 RPM
 		//---------------------------------
+		
+		//Timeout for CH2
+		//Checks Encoder Count
+		//if there is not change in encoder count in a 1 sec interval, sets RPM to zero
+		//timeout = 1/(64Mhz / 16000 Prescaler / 20 Counter Period)
+		//timeout = 0.005sec (200Hz)
 		int16_t delta_encoder_CH2 = encoder_count_CH2 - prev_encoder_count_CH2;
+		if(encoder_count_CH2 == prev_encoder_count_CH2){
+			timeout_CH2++;
+			if(timeout_CH2 == 200){
+				delta_clk_TIM2_CH2 = 0;
+				delta_clk_TIM3_CH2 = 0;
+				timeout_CH2 = 0;
+			}
+		}
+		else
+			timeout_CH2 = 0;
 		prev_encoder_count_CH2 = encoder_count_CH2;
 		
 		//Max velocity for Delta Time
@@ -767,10 +803,27 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		else if((delta_clk_TIM2_CH2 < 320) && (delta_clk_TIM3_CH2 < 320))
 			RPM_CH2 = 187.5f*((float)delta_encoder_CH2);
 		
+		
 		//---------------------------------
 		//	Channel 3 RPM
 		//---------------------------------
+		
+		//Timeout for CH3
+		//Checks Encoder Count
+		//if there is not change in encoder count in a 1 sec interval, sets RPM to zero
+		//timeout = 1/(64Mhz / 16000 Prescaler / 20 Counter Period)
+		//timeout = 0.005sec (200Hz)
 		int16_t delta_encoder_CH3 = encoder_count_CH3 - prev_encoder_count_CH3;
+		if(encoder_count_CH3 == prev_encoder_count_CH3){
+			timeout_CH3++;
+			if(timeout_CH3 == 200){
+				delta_clk_TIM2_CH3 = 0;
+				delta_clk_TIM3_CH3 = 0;
+				timeout_CH3 = 0;
+			}
+		}
+		else
+			timeout_CH3 = 0;
 		prev_encoder_count_CH3 = encoder_count_CH3;
 		
 		//Max velocity for Delta Time
@@ -795,7 +848,23 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		//---------------------------------
 		//	Channel 4 RPM
 		//---------------------------------
+		
+		//Timeout for CH4
+		//Checks Encoder Count
+		//if there is not change in encoder count in a 1 sec interval, sets RPM to zero
+		//timeout = 1/(64Mhz / 16000 Prescaler / 20 Counter Period)
+		//timeout = 0.005sec (200Hz)
 		int16_t delta_encoder_CH4 = encoder_count_CH4 - prev_encoder_count_CH4;
+		if(encoder_count_CH4 == prev_encoder_count_CH4){
+			timeout_CH4++;
+			if(timeout_CH4 == 200){
+				delta_clk_TIM2_CH4 = 0;
+				delta_clk_TIM3_CH4 = 0;
+				timeout_CH4 = 0;
+			}
+		}
+		else
+			timeout_CH4 = 0;
 		prev_encoder_count_CH4 = encoder_count_CH4;
 		
 		//Max velocity for Delta Time
