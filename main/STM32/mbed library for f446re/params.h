@@ -20,8 +20,8 @@
 #define encoder_resolution 16   //16 CPR
 #define encoder_mode 4          //x4 Encoding
 
-//Wait for the next encoder tick - If there is not tick in XX secs, set RPM to zero.
-#define timeout_compare_value 100
+//Wait for the next encoder tick - If there is no encoder tick in XX secs, set RPM to zero.
+#define timeout_msec 500
 
 //Timer 9 Settings
 // Default: 180Mhz/1000/900 = 200Hz

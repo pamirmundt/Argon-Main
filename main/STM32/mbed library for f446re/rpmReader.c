@@ -66,6 +66,23 @@
 #define IC_threshold (IC_freq/timer9_freq)
 
 
+/*******************************************************************************
+    Input Capture Timeout
+        Input capture timer waits for an encoder tick to calculate RPM. If there
+            is no tick in XX secs, sets the RPM to zero. XX secs defines the
+            minimum RPM that controller can calculate. This value adds a delay
+            to calculation of small RPMs.
+            - This value is used to calculate time between two different encoder
+            ticks.
+    Example: 100 IC Ticks (0,50secs) = min 1,875 RPM
+             200 IC Ticks (1,00secs) = min 0,9375 RPM
+             10  IC Ticks (0,05secs) = min 18,75 RPMS
+             
+                                
+     timeout_compare_value = Timeout Seconds * RPM Calculation Freq. (timer9)
+*******************************************************************************/
+#define timeout_compare_value (uint16_t)(((float)timeout_msec/1000.0f)*timer9_freq)
+
 /* External variables --------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 volatile uint16_t prev_encoder_count_CH1 = 0, prev_encoder_count_CH2 = 0, prev_encoder_count_CH3 = 0, prev_encoder_count_CH4 = 0;
