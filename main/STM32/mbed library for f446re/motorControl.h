@@ -1,34 +1,29 @@
 /**
   ******************************************************************************
-  * @file    base.h
-  * @brief   Something here
+  * @file    motorControl.h
+  * @brief   This file contains the headers of the interrupt handlers.
   ******************************************************************************
 **/
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __BASE_H
-#define __BASE_H
+#ifndef __MOTORCONTROL_H
+#define __MOTORCONTROL_H
 
 #ifdef __cplusplus
  extern "C" {
 #endif 
 
 /* Includes ------------------------------------------------------------------*/
-#include "rpmReader.h"
-#include "Inits.h"
-#include "motorControl.h"
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
 
-void base_init(void);
-void base_encoder_start(void);
-void base_RPM_start(void);
-void base_PWM_start(void);
+void set_motor_pwm(uint32_t motorNumber, uint16_t pwm);
+void set_motor_direction(uint8_t motorNumber, uint8_t dir);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __BASE_H */
+#endif /* __MOTORCONTROL_H */

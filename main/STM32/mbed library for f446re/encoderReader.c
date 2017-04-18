@@ -114,6 +114,8 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
             uint16_t input_capture_TIM1_CH1 = HAL_TIM_ReadCapturedValue(&htim1, TIM_CHANNEL_1); //read TIM2 channel 1 capture value
             delta_clk_TIM1_CH1 = input_capture_TIM1_CH1 - prev_capture_TIM1_CH1;
             prev_capture_TIM1_CH1 = input_capture_TIM1_CH1;
+            
+            delta_clk_TIM8_CH1 = 0;
         }
         
         //Timer 1 - Channel 2
@@ -123,6 +125,8 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
             uint16_t input_capture_TIM1_CH2 = HAL_TIM_ReadCapturedValue(&htim1, TIM_CHANNEL_2); //read TIM2 channel 2 capture value
             delta_clk_TIM1_CH2 = input_capture_TIM1_CH2 - prev_capture_TIM1_CH2;
             prev_capture_TIM1_CH2 = input_capture_TIM1_CH2;
+            
+            delta_clk_TIM8_CH2 = 0;
         }
         
         //Timer 1 - Channel 3
@@ -132,6 +136,8 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
             uint16_t input_capture_TIM1_CH3 = HAL_TIM_ReadCapturedValue(&htim1, TIM_CHANNEL_3); //read TIM2 channel 3 capture value
             delta_clk_TIM1_CH3 = input_capture_TIM1_CH3 - prev_capture_TIM1_CH3;
             prev_capture_TIM1_CH3 = input_capture_TIM1_CH3;
+            
+            delta_clk_TIM8_CH3 = 0;
         }
         
         //Timer 1 - Channel 4
@@ -141,6 +147,8 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
             uint16_t input_capture_TIM1_CH4 = HAL_TIM_ReadCapturedValue(&htim1, TIM_CHANNEL_4); //read TIM2 channel 4 capture value
             delta_clk_TIM1_CH4 = input_capture_TIM1_CH4 - prev_capture_TIM1_CH4;
             prev_capture_TIM1_CH4 = input_capture_TIM1_CH4;
+            
+            delta_clk_TIM8_CH4 = 0;
         }
     }
     
@@ -152,6 +160,8 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
             uint16_t input_capture_TIM8_CH1 = HAL_TIM_ReadCapturedValue(&htim8, TIM_CHANNEL_1); //read TIM3 channel 1 capture value
             delta_clk_TIM8_CH1 = input_capture_TIM8_CH1 - prev_capture_TIM8_CH1;
             prev_capture_TIM8_CH1 = input_capture_TIM8_CH1; 
+            
+            delta_clk_TIM1_CH1 = 0;
         }
         
         //Timer 8 - Channel 2
@@ -161,6 +171,8 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
             uint16_t input_capture_TIM8_CH2 = HAL_TIM_ReadCapturedValue(&htim8, TIM_CHANNEL_2); //read TIM3 channel 2 capture value
             delta_clk_TIM8_CH2 = input_capture_TIM8_CH2 - prev_capture_TIM8_CH2;
             prev_capture_TIM8_CH2 = input_capture_TIM8_CH2;
+            
+            delta_clk_TIM1_CH2 = 0;
         }
         
         //Timer 8 - Channel 3
@@ -170,6 +182,8 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
             uint16_t input_capture_TIM8_CH3 = HAL_TIM_ReadCapturedValue(&htim8, TIM_CHANNEL_3); //read TIM3 channel 3 capture value
             delta_clk_TIM8_CH3 = input_capture_TIM8_CH3 - prev_capture_TIM8_CH3;
             prev_capture_TIM8_CH3 = input_capture_TIM8_CH3;
+            
+            delta_clk_TIM1_CH3 = 0;
         }
         
         //Timer 8 - Channel 4
@@ -179,6 +193,8 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
             uint16_t input_capture_TIM8_CH4 = HAL_TIM_ReadCapturedValue(&htim8, TIM_CHANNEL_4); //read TIM3 channel 3 capture value
             delta_clk_TIM8_CH4 = input_capture_TIM8_CH4 - prev_capture_TIM8_CH4;
             prev_capture_TIM8_CH4 = input_capture_TIM8_CH4;
+            
+            delta_clk_TIM1_CH4 = 0;
         }
     }
 }

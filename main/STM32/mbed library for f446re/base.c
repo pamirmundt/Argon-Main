@@ -10,6 +10,7 @@ extern void MX_TIM15_Init(void);
 
 /* Private Variables ---------------------------------------------------------*/
 TIM_HandleTypeDef htim1;
+TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim8;
 TIM_HandleTypeDef htim9;
 
@@ -17,6 +18,7 @@ TIM_HandleTypeDef htim9;
 void base_init(void){
     MX_GPIO_Init();
     MX_TIM1_Init();
+    MX_TIM2_Init();
     MX_TIM8_Init();
     MX_TIM9_Init();    
 }
@@ -35,4 +37,11 @@ void base_encoder_start(){
 
 void base_RPM_start(){
     HAL_TIM_Base_Start_IT(&htim9);  
+}
+
+void base_PWM_start(){
+    HAL_TIM_PWM_Start_IT(&htim2, TIM_CHANNEL_1);
+    HAL_TIM_PWM_Start_IT(&htim2, TIM_CHANNEL_2);
+    HAL_TIM_PWM_Start_IT(&htim2, TIM_CHANNEL_3);
+    HAL_TIM_PWM_Start_IT(&htim2, TIM_CHANNEL_4); 
 }

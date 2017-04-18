@@ -21,6 +21,7 @@
 
 void MX_GPIO_Init(void);
 void MX_TIM1_Init(void);
+void MX_TIM2_Init(void);
 void MX_TIM8_Init(void);
 void MX_TIM9_Init(void);
 void Error_Handler(void);

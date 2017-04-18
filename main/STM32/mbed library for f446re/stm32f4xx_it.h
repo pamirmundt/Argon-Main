@@ -21,6 +21,7 @@
 
 void TIM1_BRK_TIM9_IRQHandler(void);
 void TIM1_CC_IRQHandler(void);
+void TIM2_IRQHandler(void);
 void TIM8_CC_IRQHandler(void);
 
 #ifdef __cplusplus

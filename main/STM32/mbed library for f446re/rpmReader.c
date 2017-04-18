@@ -1,6 +1,5 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_hal.h"
-#include "encoderReader.h"
 #include "rpmReader.h"
 #include "params.h"
 
