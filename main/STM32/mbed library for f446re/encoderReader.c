@@ -16,88 +16,84 @@ volatile uint16_t delta_clk_TIM1_CH1 = 0, delta_clk_TIM1_CH2 = 0, delta_clk_TIM1
 volatile uint16_t delta_clk_TIM8_CH1 = 0, delta_clk_TIM8_CH2 = 0, delta_clk_TIM8_CH3 = 0, delta_clk_TIM8_CH4 = 0;
 
 /* Functions ---------------------------------------------------------------- */
-int16_t get_encoder1_count(void){
-    return encoder_count_CH1;
+//Get Encoder Count
+int16_t getEncoderCount(uint8_t motorNumber){
+    //Front Left Wheel
+    if(motorNumber == 1)
+        return encoder_count_CH1;
+    //Front Right Wheel
+    else if(motorNumber == 2)
+        return encoder_count_CH2;
+    //Rear Left Wheel
+    else if(motorNumber == 3)
+        return encoder_count_CH3;
+    //Rear Right Wheel
+    else
+        return encoder_count_CH4;
+};
+
+//Get Clock Difference between encoder ticks
+//Get Delta Clock Encoder
+uint16_t getDeltaClkEncoder(uint8_t motorNumber, uint8_t channelNumber){
+    //Motor 1 - TIM1 CH1 / TIM8 CH1
+    if(motorNumber == 1 && channelNumber == 1)
+        return delta_clk_TIM1_CH1;
+    else if(motorNumber == 1 && channelNumber == 2)
+        return delta_clk_TIM8_CH1;
+        
+    //Motor 2 - TIM1 CH2 / TIM8 CH2
+    else if(motorNumber == 2 && channelNumber == 1)
+        return delta_clk_TIM1_CH2;
+    else if(motorNumber == 2 && channelNumber == 2)
+        return delta_clk_TIM8_CH2;
+    
+    //Motor 3 - TIM1 CH3 / TIM8 CH3
+    else if(motorNumber == 3 && channelNumber == 1)
+        return delta_clk_TIM1_CH3;
+    else if(motorNumber == 3 && channelNumber == 2)
+        return delta_clk_TIM8_CH3;
+    
+    //Motor 4 - TIM1 CH4 / TIM8 CH4
+    else if(motorNumber == 4 && channelNumber == 1)
+        return delta_clk_TIM1_CH4;
+    else if(motorNumber == 4 && channelNumber == 2)
+        return delta_clk_TIM8_CH4;
+    
+    //Else (ERROR)
+    else
+        return 0;
 }
 
-int16_t get_encoder2_count(void){
-    return encoder_count_CH2;
-}
-
-int16_t get_encoder3_count(void){
-    return encoder_count_CH3;
-}
-
-int16_t get_encoder4_count(void){
-    return encoder_count_CH4;
-}
-
-//Get TIM1 Channels
-uint16_t get_delta_clk_TIM1_CH1(void){
-    return delta_clk_TIM1_CH1;    
-}
-
-uint16_t get_delta_clk_TIM1_CH2(void){
-    return delta_clk_TIM1_CH2;    
-}
-
-uint16_t get_delta_clk_TIM1_CH3(void){
-    return delta_clk_TIM1_CH3;    
-}
-
-uint16_t get_delta_clk_TIM1_CH4(void){
-    return delta_clk_TIM1_CH4;    
-}
-
-//Get TIM8 Channels
-uint16_t get_delta_clk_TIM8_CH1(void){
-    return delta_clk_TIM8_CH1;    
-}
-
-uint16_t get_delta_clk_TIM8_CH2(void){
-    return delta_clk_TIM8_CH2;    
-}
-
-uint16_t get_delta_clk_TIM8_CH3(void){
-    return delta_clk_TIM8_CH3;    
-}
-
-uint16_t get_delta_clk_TIM8_CH4(void){
-    return delta_clk_TIM8_CH4;    
-}
-
-//Clear TIM1 Channels
-void clear_delta_clk_TIM1_CH1(void){
-    delta_clk_TIM1_CH1 = 0;
-}
-
-void clear_delta_clk_TIM1_CH2(void){
-    delta_clk_TIM1_CH2 = 0;
-}
-
-void clear_delta_clk_TIM1_CH3(void){
-    delta_clk_TIM1_CH3 = 0;
-}
-
-void clear_delta_clk_TIM1_CH4(void){
-    delta_clk_TIM1_CH4 = 0;
-}
-
-//Clear TIM8 Channels
-void clear_delta_clk_TIM8_CH1(void){
-    delta_clk_TIM8_CH1 = 0;
-}
-
-void clear_delta_clk_TIM8_CH2(void){
-    delta_clk_TIM8_CH2 = 0;
-}
-
-void clear_delta_clk_TIM8_CH3(void){
-    delta_clk_TIM8_CH3 = 0;
-}
-
-void clear_delta_clk_TIM8_CH4(void){
-    delta_clk_TIM8_CH4 = 0;
+//Clear Clock Difference between encoder ticks
+//Clear Delta Clock Encoder
+void clearDeltaClkEncoder(uint8_t motorNumber, uint8_t channelNumber){
+    //Motor 1 - TIM1 CH1 / TIM8 CH1
+    if(motorNumber == 1 && channelNumber == 1)
+        delta_clk_TIM1_CH1 = 0;
+    else if(motorNumber == 1 && channelNumber == 2)
+        delta_clk_TIM8_CH1 = 0;
+        
+    //Motor 2 - TIM1 CH2 / TIM8 CH2
+    else if(motorNumber == 2 && channelNumber == 1)
+        delta_clk_TIM1_CH2 = 0;
+    else if(motorNumber == 2 && channelNumber == 2)
+        delta_clk_TIM8_CH2 = 0;
+    
+    //Motor 3 - TIM1 CH3 / TIM8 CH3
+    else if(motorNumber == 3 && channelNumber == 1)
+        delta_clk_TIM1_CH3 = 0;
+    else if(motorNumber == 3 && channelNumber == 2)
+        delta_clk_TIM8_CH3 = 0;
+    
+    //Motor 4 - TIM1 CH4 / TIM8 CH4
+    else if(motorNumber == 4 && channelNumber == 1)
+        delta_clk_TIM1_CH4 = 0;
+    else if(motorNumber == 4 && channelNumber == 2)
+        delta_clk_TIM8_CH4 = 0;
+    
+    //Else (ERROR)
+    else
+        return;
 }
 
 /**

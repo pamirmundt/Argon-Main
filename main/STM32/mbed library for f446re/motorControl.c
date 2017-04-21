@@ -8,7 +8,7 @@ extern TIM_HandleTypeDef htim2;
 
 /* Functions ---------------------------------------------------------------- */
 
-void set_motor_pwm(uint32_t motorNumber, uint16_t pwm){ 
+void setMotorPWM(uint32_t motorNumber, uint16_t pwm){ 
     //TIM_CHANNEL_1 - Motor 1 PWM - PB8
     //TIM_CHANNEL_2 - Motor 2 PWM - PB9
     //TIM_CHANNEL_3 - Motor 3 PWM - PB10
@@ -37,7 +37,7 @@ void set_motor_pwm(uint32_t motorNumber, uint16_t pwm){
     Motor 3 Direction Pin - PB14
     Motor 4 Direction Pin - PB15
 */
-void set_motor_direction(uint8_t motorNumber, uint8_t dir){
+void setMotorDirection(uint8_t motorNumber, uint8_t dir){
     uint16_t dir_pin;
     GPIO_PinState state = GPIO_PIN_RESET;
     if(motorNumber == 1)

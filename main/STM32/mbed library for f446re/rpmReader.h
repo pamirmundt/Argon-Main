@@ -20,11 +20,8 @@
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
 
-float get_motor1_RPM(void);
-float get_motor2_RPM(void);
-float get_motor3_RPM(void);
-float get_motor4_RPM(void);
-
+//Get Motor RPM
+float getMotorRPM(uint8_t motorNumber);
 
 #ifdef __cplusplus
 }

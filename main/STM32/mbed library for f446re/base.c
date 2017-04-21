@@ -15,7 +15,7 @@ TIM_HandleTypeDef htim8;
 TIM_HandleTypeDef htim9;
 
 /* Functions ---------------------------------------------------------------- */
-void base_init(void){
+void baseInit(void){
     MX_GPIO_Init();
     MX_TIM1_Init();
     MX_TIM2_Init();
@@ -23,7 +23,7 @@ void base_init(void){
     MX_TIM9_Init();    
 }
 
-void base_encoder_start(){
+void baseEncoderStart(){
     HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_1);
     HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_2);
     HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_3);
@@ -35,11 +35,11 @@ void base_encoder_start(){
     HAL_TIM_IC_Start_IT(&htim8, TIM_CHANNEL_4);  
 }
 
-void base_RPM_start(){
+void baseRpmStart(){
     HAL_TIM_Base_Start_IT(&htim9);  
 }
 
-void base_PWM_start(){
+void basePwmStart(){
     HAL_TIM_PWM_Start_IT(&htim2, TIM_CHANNEL_1);
     HAL_TIM_PWM_Start_IT(&htim2, TIM_CHANNEL_2);
     HAL_TIM_PWM_Start_IT(&htim2, TIM_CHANNEL_3);

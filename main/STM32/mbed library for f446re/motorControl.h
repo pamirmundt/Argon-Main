@@ -19,8 +19,8 @@
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
 
-void set_motor_pwm(uint32_t motorNumber, uint16_t pwm);
-void set_motor_direction(uint8_t motorNumber, uint8_t dir);
+void setMotorPWM(uint32_t motorNumber, uint16_t pwm);
+void setMotorDirection(uint8_t motorNumber, uint8_t dir);
 
 #ifdef __cplusplus
 }

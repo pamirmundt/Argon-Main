@@ -91,22 +91,18 @@ volatile float RPM_CH1 = 0.0f, RPM_CH2 = 0.0f, RPM_CH3 = 0.0f, RPM_CH4 = 0.0f;
 
 /* Functions variables -------------------------------------------------------*/
 
-float get_motor1_RPM(void){
-    return RPM_CH1;    
-}
 
-float get_motor2_RPM(void){
-    return RPM_CH2;    
+/* Functions -----------------------------------------------------------------*/
+float getMotorRPM(uint8_t motorNumber){
+    if(motorNumber == 1)
+        return RPM_CH1;
+    else if(motorNumber == 2)
+        return RPM_CH2;
+    else if(motorNumber == 3)
+        return RPM_CH3;
+    else
+        return RPM_CH4;
 }
-
-float get_motor3_RPM(void){
-    return RPM_CH3;    
-}
-
-float get_motor4_RPM(void){
-    return RPM_CH4;    
-}
-
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
     if(htim->Instance == TIM9){
@@ -119,15 +115,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
         //if there is not change in encoder count in a 1 sec interval, sets RPM to zero
         //timeout = 1/(64Mhz / 16000 Prescaler / 20 Counter Period)
         //timeout = 0.005sec (200Hz)
-        uint16_t delta_clk_TIM1_CH1 = get_delta_clk_TIM1_CH1();
-        uint16_t delta_clk_TIM8_CH1 = get_delta_clk_TIM8_CH1();
-        int16_t encoder_count_CH1 = get_encoder1_count();
+        uint16_t delta_clk_TIM1_CH1 = getDeltaClkEncoder(1,1);
+        uint16_t delta_clk_TIM8_CH1 = getDeltaClkEncoder(1,2);
+        int16_t encoder_count_CH1 = getEncoderCount(1);
         int16_t delta_encoder_CH1 = encoder_count_CH1 - prev_encoder_count_CH1;
         if(delta_encoder_CH1 == 0){
             timeout_CH1++;
             if(timeout_CH1 == timeout_compare_value){
-                clear_delta_clk_TIM1_CH1();
-                clear_delta_clk_TIM8_CH1();
+                clearDeltaClkEncoder(1,1);  //Encoder 1 Channel A
+                clearDeltaClkEncoder(1,2);  //Encoder 1 Channel B
                 timeout_CH1 = 0;
             }
         }
@@ -163,15 +159,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
         //if there is not change in encoder count in a 1 sec interval, sets RPM to zero
         //timeout = 1/(64Mhz / 16000 Prescaler / 20 Counter Period)
         //timeout = 0.005sec (200Hz)
-        uint16_t delta_clk_TIM1_CH2 = get_delta_clk_TIM1_CH2();
-        uint16_t delta_clk_TIM8_CH2 = get_delta_clk_TIM8_CH2();
-        int16_t encoder_count_CH2 = get_encoder2_count();
+        uint16_t delta_clk_TIM1_CH2 = getDeltaClkEncoder(2,1);
+        uint16_t delta_clk_TIM8_CH2 = getDeltaClkEncoder(2,2);
+        int16_t encoder_count_CH2 = getEncoderCount(2);
         int16_t delta_encoder_CH2 = encoder_count_CH2 - prev_encoder_count_CH2;
         if(delta_encoder_CH2 == 0){
             timeout_CH2++;
             if(timeout_CH2 == timeout_compare_value){
-                clear_delta_clk_TIM1_CH2();
-                clear_delta_clk_TIM8_CH2();
+                clearDeltaClkEncoder(2,1);  //Encoder 2 Channel A
+                clearDeltaClkEncoder(2,2);  //Encoder 2 Channel B
                 timeout_CH2 = 0;
             }
         }
@@ -207,15 +203,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
         //if there is not change in encoder count in a 1 sec interval, sets RPM to zero
         //timeout = 1/(64Mhz / 16000 Prescaler / 20 Counter Period)
         //timeout = 0.005sec (200Hz)
-        uint16_t delta_clk_TIM1_CH3 = get_delta_clk_TIM1_CH3();
-        uint16_t delta_clk_TIM8_CH3 = get_delta_clk_TIM8_CH3();
-        int16_t encoder_count_CH3 = get_encoder3_count();
+        uint16_t delta_clk_TIM1_CH3 = getDeltaClkEncoder(3,1);
+        uint16_t delta_clk_TIM8_CH3 = getDeltaClkEncoder(3,2);
+        int16_t encoder_count_CH3 = getEncoderCount(3);
         int16_t delta_encoder_CH3 = encoder_count_CH3 - prev_encoder_count_CH3;
         if(delta_encoder_CH3 == 0){
             timeout_CH3++;
             if(timeout_CH3 == timeout_compare_value){
-                clear_delta_clk_TIM1_CH3();
-                clear_delta_clk_TIM8_CH3();
+                clearDeltaClkEncoder(3,1);  //Encoder 3 Channel A
+                clearDeltaClkEncoder(3,2);  //Encoder 3 Channel B
                 timeout_CH3 = 0;
             }
         }
@@ -251,15 +247,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
         //if there is not change in encoder count in a 1 sec interval, sets RPM to zero
         //timeout = 1/(64Mhz / 16000 Prescaler / 20 Counter Period)
         //timeout = 0.005sec (200Hz)
-        uint16_t delta_clk_TIM1_CH4 = get_delta_clk_TIM1_CH4();
-        uint16_t delta_clk_TIM8_CH4 = get_delta_clk_TIM8_CH4();
-        int16_t encoder_count_CH4 = get_encoder4_count();
+        uint16_t delta_clk_TIM1_CH4 = getDeltaClkEncoder(4,1);
+        uint16_t delta_clk_TIM8_CH4 = getDeltaClkEncoder(4,2);
+        int16_t encoder_count_CH4 = getEncoderCount(4);
         int16_t delta_encoder_CH4 = encoder_count_CH4 - prev_encoder_count_CH4;
         if(delta_encoder_CH4 == 0){
             timeout_CH4++;
             if(timeout_CH4 == timeout_compare_value){
-                clear_delta_clk_TIM1_CH4();
-                clear_delta_clk_TIM8_CH4();
+                clearDeltaClkEncoder(4,1);  //Encoder 4, Channel A
+                clearDeltaClkEncoder(4,2);  //Encoder 4, Channel B
                 timeout_CH4 = 0;
             }
         }
