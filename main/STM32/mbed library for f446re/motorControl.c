@@ -40,19 +40,33 @@ void setMotorPWM(uint32_t motorNumber, uint16_t pwm){
 void setMotorDirection(uint8_t motorNumber, uint8_t dir){
     uint16_t dir_pin;
     GPIO_PinState state = GPIO_PIN_RESET;
-    if(motorNumber == 1)
+    
+    if(motorNumber == 1){
         dir_pin = GPIO_PIN_12;
-    else if(motorNumber == 2)
+        if(dir)
+            state = GPIO_PIN_SET;
+    }
+    
+    else if(motorNumber == 2){
         dir_pin = GPIO_PIN_13;
-    else if(motorNumber == 3)
+        if(!dir)
+            state = GPIO_PIN_SET;
+    }
+    
+    else if(motorNumber == 3){
         dir_pin = GPIO_PIN_14;
-    else if(motorNumber == 4)
+        if(dir)
+            state = GPIO_PIN_SET;
+    }
+        
+        
+    else if(motorNumber == 4){
         dir_pin = GPIO_PIN_15;
+        if(!dir)
+            state = GPIO_PIN_SET;    
+    }
     else
         return;
-    
-    if(!dir)
-        state = GPIO_PIN_SET;
 
     HAL_GPIO_WritePin(GPIOB, dir_pin, state);
 }

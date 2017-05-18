@@ -105,7 +105,7 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
     if(htim->Instance == TIM1){
         //Timer 1 - Channel 1
         if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1){
-            encoder_count_CH1++;
+            encoder_count_CH1--;
             
             uint16_t input_capture_TIM1_CH1 = HAL_TIM_ReadCapturedValue(&htim1, TIM_CHANNEL_1); //read TIM2 channel 1 capture value
             delta_clk_TIM1_CH1 = input_capture_TIM1_CH1 - prev_capture_TIM1_CH1;
@@ -127,7 +127,7 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
         
         //Timer 1 - Channel 3
         else if(htim->Channel == HAL_TIM_ACTIVE_CHANNEL_3){
-            encoder_count_CH3++;
+            encoder_count_CH3--;
             
             uint16_t input_capture_TIM1_CH3 = HAL_TIM_ReadCapturedValue(&htim1, TIM_CHANNEL_3); //read TIM2 channel 3 capture value
             delta_clk_TIM1_CH3 = input_capture_TIM1_CH3 - prev_capture_TIM1_CH3;
@@ -151,7 +151,7 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
     else if(htim->Instance == TIM8){
         //Timer 8 - Channel 1
         if(htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1){
-            encoder_count_CH1--;
+            encoder_count_CH1++;
             
             uint16_t input_capture_TIM8_CH1 = HAL_TIM_ReadCapturedValue(&htim8, TIM_CHANNEL_1); //read TIM3 channel 1 capture value
             delta_clk_TIM8_CH1 = input_capture_TIM8_CH1 - prev_capture_TIM8_CH1;
@@ -173,7 +173,7 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
         
         //Timer 8 - Channel 3
         else if(htim->Channel == HAL_TIM_ACTIVE_CHANNEL_3){
-            encoder_count_CH3--;
+            encoder_count_CH3++;
             
             uint16_t input_capture_TIM8_CH3 = HAL_TIM_ReadCapturedValue(&htim8, TIM_CHANNEL_3); //read TIM3 channel 3 capture value
             delta_clk_TIM8_CH3 = input_capture_TIM8_CH3 - prev_capture_TIM8_CH3;

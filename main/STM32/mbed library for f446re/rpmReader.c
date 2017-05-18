@@ -107,7 +107,7 @@ float getMotorRPM(uint8_t motorNumber){
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
     if(htim->Instance == TIM9){
         //---------------------------------
-        //  Channel 1 RPM
+        //  Wheel 1 RPM
         //---------------------------------
         
         //Timeout for CH1
@@ -133,25 +133,25 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
         prev_encoder_count_CH1 = encoder_count_CH1;
         
         //Max velocity for Delta Time
-        //Count Limit(timer count) = 64Mhz / 1000Prescale / 200Hz (Velocity calculation loop)
-        //320 = 64Mhz / 1000 / 200Hz
+        //Count Limit(timer count) = 64Mhz / 1000Prescale / 100Hz (Velocity calculation loop)
+        //640 = 64Mhz / 1000 / 100Hz
         //Timer 2 - Channel 1
         if(delta_clk_TIM1_CH1 >= IC_threshold){
             //RPM = 60Sec / ( 64Enc * Delta_time)
             //Delta_time(seconds) = delta_count / (64Mhz / 1000Prescale)
-            RPM_CH1 = RPM_res_per_IC/(float)delta_clk_TIM1_CH1;
+            RPM_CH1 = -RPM_res_per_IC/(float)delta_clk_TIM1_CH1;
         }
         //Timer 3 - Channel 1
         else if(delta_clk_TIM8_CH1 >= IC_threshold){
             //RPM = 60Sec / ( 64Enc * Delta_time)
             //Delta_time(seconds) = delta_count / (64Mhz / 1000Prescale)
-            RPM_CH1 = -RPM_res_per_IC/(float)delta_clk_TIM8_CH1;
+            RPM_CH1 = RPM_res_per_IC/(float)delta_clk_TIM8_CH1;
         }
         else if((delta_clk_TIM1_CH1 < IC_threshold) || (delta_clk_TIM8_CH1 < IC_threshold))
             RPM_CH1 = RPM_res_per_tick*((float)delta_encoder_CH1);
         
         //---------------------------------
-        //  Channel 2 RPM
+        //  Wheel 2 RPM
         //---------------------------------
         
         //Timeout for CH2
@@ -195,7 +195,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
         
         
         //---------------------------------
-        //  Channel 3 RPM
+        //  Wheel 3 RPM
         //---------------------------------
         
         //Timeout for CH3
@@ -226,20 +226,20 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
         if(delta_clk_TIM1_CH3 >= IC_threshold){
             //RPM = 60Sec / ( 64Enc * Delta_time)
             //Delta_time(seconds) = delta_count / (64Mhz / 1000Prescale)
-            RPM_CH3 = RPM_res_per_IC/(float)delta_clk_TIM1_CH3;
+            RPM_CH3 = -RPM_res_per_IC/(float)delta_clk_TIM1_CH3;
         }
         //Timer 3 - Channel 3
         else if(delta_clk_TIM8_CH3 >= IC_threshold){
             //RPM = 60Sec / ( 64Enc * Delta_time)
             //Delta_time(seconds) = delta_count / (64Mhz / 1000Prescale)
-            RPM_CH3 = -RPM_res_per_IC/(float)delta_clk_TIM8_CH3;
+            RPM_CH3 = RPM_res_per_IC/(float)delta_clk_TIM8_CH3;
         }
         else if((delta_clk_TIM1_CH3 < IC_threshold) || (delta_clk_TIM8_CH3 < IC_threshold))
             RPM_CH3 = RPM_res_per_tick*((float)delta_encoder_CH3);
         
         
         //---------------------------------
-        //  Channel 4 RPM
+        //  Wheel 4 RPM
         //---------------------------------
         
         //Timeout for CH4
