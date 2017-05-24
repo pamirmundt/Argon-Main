@@ -1,0 +1,23 @@
+OPENOCD STM32F4 Commands
+
+Commandline example:
+sudo openocd -f /home/pi/raspberrypi3-native.cfg -c init -c "reset halt" -c shutdown 2>&1
+
+
+-------------
+#UPLOAD
+reset halt
+flash write_image erase test.bin 0x08000000
+reset run
+-------------
+#ERASE
+reset halt
+stm32f4x mass_erase 0
+flash write_bank 0 ArgonMainNUCLEO_F446RE.bin 0
+reset run
+-------------
+#RUN
+reset halt
+-------------
+#HALT
+reset halt

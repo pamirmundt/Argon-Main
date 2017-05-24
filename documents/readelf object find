@@ -1,0 +1,18 @@
+#!/bin/bash
+# My first script
+
+#Useful Links
+#	https://www.bottomupcs.com/elf.xhtml
+#	https://stackoverflow.com/questions/11003376/extract-global-variables-from-a-out-file
+
+#readelf --debug-dump=info b.elf | grep -A 3 test
+#readelf -s b.elf | grep OBJECT | awk '{print $2, $3, $4}'
+
+#Print all
+readelf -s b.elf | gawk '{if (($4 == "OBJECT") && ($3 > 0) && ($3 <= 4))print}'
+
+#Get name as array
+list=$(readelf -s b.elf | gawk '{if (($4 == "OBJECT") && ($3 > 0) && ($3 <= 4))print $8}')
+
+#Find value
+readelf --debug-dump=info b.elf | gawk -v var="$list" 'BEGIN{split(var,l,"\n"); found == 0 } {for(i in l){if($0 ~ l[i]) print; if(/\<DW_AT_type\>/ && found == 1){print; found = 0; }}}'
