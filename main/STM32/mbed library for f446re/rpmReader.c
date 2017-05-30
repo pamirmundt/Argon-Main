@@ -89,19 +89,22 @@ volatile uint8_t timeout_CH1 = 0, timeout_CH2 = 0, timeout_CH3 = 0, timeout_CH4 
 
 volatile float RPM_CH1 = 0.0f, RPM_CH2 = 0.0f, RPM_CH3 = 0.0f, RPM_CH4 = 0.0f;
 
+float volatile filteredRPM_CH1 = 0.0f, filteredRPM_CH2 = 0.0f, filteredRPM_CH3 = 0.0f, filteredRPM_CH4 = 0.0f;
+float alpha = 1.0f;
+
 /* Functions variables -------------------------------------------------------*/
 
 
 /* Functions -----------------------------------------------------------------*/
 float getMotorRPM(uint8_t motorNumber){
     if(motorNumber == 1)
-        return RPM_CH1;
+        return filteredRPM_CH1;
     else if(motorNumber == 2)
-        return RPM_CH2;
+        return filteredRPM_CH2;
     else if(motorNumber == 3)
-        return RPM_CH3;
+        return filteredRPM_CH3;
     else
-        return RPM_CH4;
+        return filteredRPM_CH4;
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
@@ -150,6 +153,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
         else if((delta_clk_TIM1_CH1 < IC_threshold) || (delta_clk_TIM8_CH1 < IC_threshold))
             RPM_CH1 = RPM_res_per_tick*((float)delta_encoder_CH1);
         
+        filteredRPM_CH1 = (alpha*RPM_CH1)+(1.0f - alpha)*filteredRPM_CH1;
         //---------------------------------
         //  Wheel 2 RPM
         //---------------------------------
@@ -193,7 +197,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
         else if((delta_clk_TIM1_CH2 < IC_threshold) || (delta_clk_TIM8_CH2 < IC_threshold))
             RPM_CH2 = RPM_res_per_tick*((float)delta_encoder_CH2);
         
-        
+        filteredRPM_CH2 = (alpha*RPM_CH2)+(1.0f - alpha)*filteredRPM_CH2;
         //---------------------------------
         //  Wheel 3 RPM
         //---------------------------------
@@ -237,7 +241,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
         else if((delta_clk_TIM1_CH3 < IC_threshold) || (delta_clk_TIM8_CH3 < IC_threshold))
             RPM_CH3 = RPM_res_per_tick*((float)delta_encoder_CH3);
         
-        
+        filteredRPM_CH3 = (alpha*RPM_CH3)+(1.0f - alpha)*filteredRPM_CH3;
         //---------------------------------
         //  Wheel 4 RPM
         //---------------------------------
@@ -279,4 +283,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
         else if((delta_clk_TIM1_CH4 < IC_threshold) || (delta_clk_TIM8_CH4 < IC_threshold))
             RPM_CH4 = RPM_res_per_tick*((float)delta_encoder_CH4);
     }
+    
+    filteredRPM_CH4 = (alpha*RPM_CH4)+(1.0f - alpha)*filteredRPM_CH4;
 }

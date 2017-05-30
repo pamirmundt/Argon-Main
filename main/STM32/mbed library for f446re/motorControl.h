@@ -22,6 +22,11 @@
 void setMotorPWM(uint32_t motorNumber, uint16_t pwm);
 void setMotorDirection(uint8_t motorNumber, uint8_t dir);
 
+enum directions {
+    forward,
+    backward,
+};
+
 #ifdef __cplusplus
 }
 #endif

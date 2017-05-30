@@ -17,6 +17,7 @@
 #include "Inits.h"
 #include "rpmReader.h"
 #include "motorControl.h"
+#include "params.h"
 /* Exported types ------------------------------------------------------------*/
 
 enum mecanumWheels {
@@ -26,7 +27,6 @@ enum mecanumWheels {
     rearLeft,       //WheelNumber 3
     rearRight,      //WheelNumber 4
 };
-
 
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
