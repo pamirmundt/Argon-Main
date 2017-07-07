@@ -18,8 +18,8 @@
 #define wheelRadius                       0.03f     //meter - r:30mm
 #define lengthBetweenFrontAndRearWheels   0.160f    //meter - a:160mm
 #define lengthBetweenFrontWheels          0.148f    //meter - b:148mm
-#define geomFactor                       (lengthBetweenFrontAndRearWheels / 2.0f + lengthBetweenFrontWheels / 2.0f)
-#define gearRatio 4096.0f/27.0f
+#define geomFactor                        (lengthBetweenFrontAndRearWheels / 2.0f + lengthBetweenFrontWheels / 2.0f)
+#define gearRatio                         (4096.0f/27.0f)
 /* Encoder Parameters --------------------------------------------------------*/
 #define encoder_resolution 16   //16 CPR
 #define encoder_mode 4          //x4 Quadrature Reading
