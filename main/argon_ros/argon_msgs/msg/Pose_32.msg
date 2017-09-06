@@ -1,0 +1,2 @@
+Point_32 position
+Quaternion_32 orientation

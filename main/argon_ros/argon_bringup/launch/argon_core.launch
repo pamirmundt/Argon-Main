@@ -1,0 +1,12 @@
+<launch>
+
+    <node pkg="rosserial_python" type="serial_node.py" name="argon_serial_core" output="screen">
+        <param name="port" value="/dev/ttyS0"/>
+        <param name="baud" value="115200"/>
+    </node>
+
+    <node pkg="argon_bringup" type="argon_msgs_transform.py" name="argon_msgs_transformer" output="screen">
+    </node>
+
+</launch>
+
