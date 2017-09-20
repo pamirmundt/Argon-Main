@@ -64,19 +64,19 @@ if __name__=="__main__":
                 status = status + 1
                 print vels(target_long_vel, target_trans_vel, target_ang_vel)
             elif key == 'a' :
-                target_trans_vel = target_trans_vel - 0.01
-                status = status + 1
-                print vels(target_long_vel, target_trans_vel, target_ang_vel)
-            elif key == 'd' :
                 target_trans_vel = target_trans_vel + 0.01
                 status = status + 1
                 print vels(target_long_vel, target_trans_vel, target_ang_vel)
+            elif key == 'd' :
+                target_trans_vel = target_trans_vel - 0.01
+                status = status + 1
+                print vels(target_long_vel, target_trans_vel, target_ang_vel)
             elif key == 'q' :
-                target_ang_vel = target_ang_vel - 0.01
+                target_ang_vel = target_ang_vel + 0.01
                 status = status + 1
                 print vels(target_long_vel, target_trans_vel, target_ang_vel)
             elif key == 'e' :
-                target_ang_vel = target_ang_vel + 0.01
+                target_ang_vel = target_ang_vel - 0.01
                 status = status + 1
                 print vels(target_long_vel, target_trans_vel, target_ang_vel)
             elif key == ' ' or key == 's' :

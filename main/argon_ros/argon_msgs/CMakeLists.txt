@@ -50,6 +50,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
+  ImuWithoutCovariance_32.msg
+  Imu_32.msg
   JointState_32.msg
   Odometry_32.msg
   OdometryWithoutCovariance_32.msg

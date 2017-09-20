@@ -1,0 +1,7 @@
+Header header
+Quaternion_32 orientation
+float32[9] orientation_covariance
+Vector3_32 angular_velocity
+float32[9] angular_velocity_covariance
+Vector3_32 linear_acceleration
+float32[9] linear_acceleration_covariance
